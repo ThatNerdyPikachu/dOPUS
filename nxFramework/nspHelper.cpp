@@ -1,6 +1,7 @@
 #include "nspHelper.h"
 #include "../tinfoil/install/simple_filesystem.hpp"
 #include "../tinfoil/nx/content_meta.hpp"
+#include "../tinfoil/nx/ncm.hpp"
 #include "../tinfoil/util/title_util.hpp"
 #include <iostream>
 #include <memory>
@@ -104,25 +105,95 @@ void InstallApplicationRecord(nx::ncm::ContentMeta& contentMeta, const FsStorage
         LOG("Failed to push application record");
 }
 
-/*
+void InstallNCA(SimpleFileSystem& simpleFS, const NcmNcaId &ncaId, const FsStorageId& destStorageId)
+{
+    std::string ncaName = tin::util::GetNcaIdString(ncaId);
+
+    if (simpleFS.HasFile(ncaName + ".nca"))
+        ncaName += ".nca";
+    else
+    if (simpleFS.HasFile(ncaName + ".cnmt.nca"))
+        ncaName += ".cnmt.nca";
+    else
+    {
+        throw std::runtime_error(("Failed to find NCA file " + ncaName + ".nca/.cnmt.nca").c_str());
+    }
+
+    LOG("NcaId: %s\n", ncaName.c_str());
+    LOG("Dest storage Id: %u\n", destStorageId);
+
+    nx::ncm::ContentStorage contentStorage(destStorageId);
+
+    // Attempt to delete any leftover placeholders
+    try
+    {
+        contentStorage.DeletePlaceholder(ncaId);
+    }
+    catch (...) {}
+
+    auto ncaFile    = simpleFS.OpenFile(ncaName);
+    size_t ncaSize  = ncaFile.GetSize();
+    u64 fileOff     = 0;
+    size_t readSize = 0x400000; // 4MB buff
+    auto readBuffer = std::make_unique<u8[]>(readSize);
+
+    if (readBuffer == NULL)
+        throw std::runtime_error(("Failed to allocate read buffer for " + ncaName).c_str());
+
+    LOG("Size: 0x%lx\n", ncaSize);
+    contentStorage.CreatePlaceholder(ncaId, ncaId, ncaSize);
+
+    float progress;
+
+    while (fileOff < ncaSize)
+    {
+        // Clear the buffer before we read anything, just to be sure
+        progress = (float)fileOff / (float)ncaSize;
+
+        if (fileOff % (0x400000 * 3) == 0)
+            LOG("> Progress: %lu/%lu MB (%d%s)\r", (fileOff / 1000000), (ncaSize / 1000000), (int)(progress * 100.0), "%");
+
+        if (fileOff + readSize >= ncaSize)
+            readSize = ncaSize - fileOff;
+
+        ncaFile.Read(fileOff, readBuffer.get(), readSize);
+        contentStorage.WritePlaceholder(ncaId, fileOff, readBuffer.get(), readSize);
+        fileOff += readSize;
+    }
+
+    // Clean up the line for whatever comes next
+    LOG("                                                           \r");
+    LOG("Registering placeholder...\n");
+
+    try
+    {
+        contentStorage.Register(ncaId, ncaId);
+    }
+    catch (...)
+    {
+        LOG(("Failed to register " + ncaName + ". It may already exist.\n").c_str());
+    }
+    try
+    {
+        contentStorage.DeletePlaceholder(ncaId);
+    }
+    catch (...) {}
+}
+
+
 InstallNSP(std::string filename)
 {
     try
     {
         nx::fs::IFileSystem fileSystem;
         fileSystem.OpenFileSystemWithId(filename.c_str(), FsFileSystemType_ApplicationPackage, 0);
-        tin::install::nsp::SimpleFileSystem simpleFS(fileSystem, "/", filename.c_str() + "/");
+        SimpleFileSystem simpleFS(fileSystem, "/", filename.c_str() + "/");
 
-        tin::install::nsp::NSPInstallTask task(simpleFS, m_destStorageId, m_ignoreReqFirmVersion);
+//tin::install::nsp::NSPInstallTask task(simpleFS, m_destStorageId, m_ignoreReqFirmVersion);
 
         printf("Preparing install...\n");
 
-
-/////////////////////////////////////////////
-/////////////////////////////////////////////
-/////////////////////////////////////////////
-
-//        task.Prepare();
+//task.Prepare();
         tin::util::ByteBuffer cnmtBuf;
         auto cnmtTuple = this->ReadCNMT();
         m_contentMeta = std::get<0>(cnmtTuple);
@@ -134,9 +205,6 @@ InstallNSP(std::string filename)
         {
             printf("Installing CNMT NCA...\n");
             //InstallNCA(cnmtContentRecord.ncaId);
-            /////////////////////////////////////////////
-            /////////////////////////////////////////////
-
         }
         else
         {
@@ -162,9 +230,6 @@ InstallNSP(std::string filename)
         {
             printf("WARNING: Ticket installation failed! This may not be an issue, depending on your usecase.\nProceed with caution!\n");
         }
-/////////////////////////////////////////////
-/////////////////////////////////////////////
-/////////////////////////////////////////////
 
         LOG("Pre Install Records: \n");
         //task.DebugPrintInstallData();
@@ -182,80 +247,3 @@ InstallNSP(std::string filename)
     }
 }
 
-
-
-
-    void NSPInstallTask::InstallNCA(const NcmNcaId &ncaId)
-    {
-        std::string ncaName = tin::util::GetNcaIdString(ncaId);
-
-        if (m_simpleFileSystem->HasFile(ncaName + ".nca"))
-            ncaName += ".nca";
-        else if (m_simpleFileSystem->HasFile(ncaName + ".cnmt.nca"))
-            ncaName += ".cnmt.nca";
-        else
-        {
-            throw std::runtime_error(("Failed to find NCA file " + ncaName + ".nca/.cnmt.nca").c_str());
-        }
-
-        LOG_DEBUG("NcaId: %s\n", ncaName.c_str());
-        LOG_DEBUG("Dest storage Id: %u\n", m_destStorageId);
-
-        nx::ncm::ContentStorage contentStorage(m_destStorageId);
-
-        // Attempt to delete any leftover placeholders
-        try
-        {
-            contentStorage.DeletePlaceholder(ncaId);
-        }
-        catch (...) {}
-
-        auto ncaFile = m_simpleFileSystem->OpenFile(ncaName);
-        size_t ncaSize = ncaFile.GetSize();
-        u64 fileOff = 0;
-        size_t readSize = 0x400000; // 4MB buff
-        auto readBuffer = std::make_unique<u8[]>(readSize);
-
-        if (readBuffer == NULL)
-            throw std::runtime_error(("Failed to allocate read buffer for " + ncaName).c_str());
-
-        LOG_DEBUG("Size: 0x%lx\n", ncaSize);
-        contentStorage.CreatePlaceholder(ncaId, ncaId, ncaSize);
-
-        float progress;
-
-        while (fileOff < ncaSize)
-        {
-            // Clear the buffer before we read anything, just to be sure
-            progress = (float)fileOff / (float)ncaSize;
-
-            if (fileOff % (0x400000 * 3) == 0)
-                printf("> Progress: %lu/%lu MB (%d%s)\r", (fileOff / 1000000), (ncaSize / 1000000), (int)(progress * 100.0), "%");
-
-            if (fileOff + readSize >= ncaSize) readSize = ncaSize - fileOff;
-
-            ncaFile.Read(fileOff, readBuffer.get(), readSize);
-            contentStorage.WritePlaceholder(ncaId, fileOff, readBuffer.get(), readSize);
-            fileOff += readSize;
-        }
-
-        // Clean up the line for whatever comes next
-        printf("                                                           \r");
-        printf("Registering placeholder...\n");
-
-        try
-        {
-            contentStorage.Register(ncaId, ncaId);
-        }
-        catch (...)
-        {
-            printf(("Failed to register " + ncaName + ". It may already exist.\n").c_str());
-        }
-
-        try
-        {
-            contentStorage.DeletePlaceholder(ncaId);
-        }
-        catch (...) {}
-    }
-*/

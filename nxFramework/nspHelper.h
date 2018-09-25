@@ -15,4 +15,4 @@ bool InstallNSP(std::string filename);
 void InstallContentMetaRecords(tin::util::ByteBuffer& installContentMetaBuf);
 void InstallApplicationRecord();
 void InstallTicketCert(tin::install::nsp::SimpleFileSystem& simpleFS);
-void InstallNCA(const NcmNcaId &ncaId);
+void InstallNCA(tin::install::nsp::SimpleFileSystem& simpleFS, const NcmNcaId &ncaId, const FsStorageId& destStorageId);
