@@ -3,10 +3,10 @@
 
 namespace nx::ncm
 {
-    ContentStorage::ContentStorage(FsStorageId storageId) 
+    ContentStorage::ContentStorage(FsStorageId storageId)
     {
         if(R_FAILED(ncmOpenContentStorage(storageId, &m_contentStorage)))
-            LOG("Failed to open NCM ContentStorage");
+            LOG("Failed to open NCM ContentStorage\n");
     }
 
     ContentStorage::~ContentStorage()
@@ -17,38 +17,38 @@ namespace nx::ncm
     void ContentStorage::CreatePlaceholder(const NcmNcaId &placeholderId, const NcmNcaId &registeredId, size_t size)
     {
         if(R_FAILED(ncmCreatePlaceHolder(&m_contentStorage, &placeholderId, &registeredId, size)))
-            LOG("Failed to create placeholder");
+            LOG("Failed to create placeholder\n");
     }
-            
+
     void ContentStorage::DeletePlaceholder(const NcmNcaId &placeholderId)
     {
         if(R_FAILED(ncmDeletePlaceHolder(&m_contentStorage, &placeholderId)))
-            LOG("Failed to delete placeholder");
+            LOG("Failed to delete placeholder\n");
     }
 
     void ContentStorage::WritePlaceholder(const NcmNcaId &placeholderId, u64 offset, void *buffer, size_t bufSize)
     {
         if(R_FAILED(ncmWritePlaceHolder(&m_contentStorage, &placeholderId, offset, buffer, bufSize)))
-            LOG("Failed to write to placeholder");
+            LOG("Failed to write to placeholder\n");
     }
 
     void ContentStorage::Register(const NcmNcaId &placeholderId, const NcmNcaId &registeredId)
     {
         if(R_FAILED(ncmContentStorageRegister(&m_contentStorage, &registeredId, &placeholderId)))
-            LOG("Failed to register placeholder NCA");
+            LOG("Failed to register placeholder NCA\n");
     }
 
     void ContentStorage::Delete(const NcmNcaId &registeredId)
     {
         if(R_FAILED(ncmDelete(&m_contentStorage, &registeredId)))
-            LOG("Failed to delete registered NCA");
+            LOG("Failed to delete registered NCA\n");
     }
 
     bool ContentStorage::Has(const NcmNcaId &registeredId)
     {
         bool hasNCA = false;
         if(R_FAILED(ncmContentStorageHas(&m_contentStorage, &registeredId, &hasNCA)))
-            LOG("Failed to check if NCA is present");
+            LOG("Failed to check if NCA is present\n");
         return hasNCA;
     }
 
@@ -56,7 +56,7 @@ namespace nx::ncm
     {
         char pathBuf[FS_MAX_PATH] = {0};
         if(R_FAILED(ncmContentStorageGetPath(&m_contentStorage, &registeredId, pathBuf, FS_MAX_PATH)))
-            LOG("Failed to get installed NCA path");
+            LOG("Failed to get installed NCA path\n");
         return std::string(pathBuf);
     }
 }

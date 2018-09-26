@@ -20,10 +20,16 @@
 
 #define wait(msec) svcSleepThread(10000000 * (s64)msec)
 #ifdef DEBUG
-#define LOG(f_, ...) printf((f_), ##__VA_ARGS__)
+#define LOG(f_, ...)            do {    printf("%s:%u: \t", __func__, __LINE__);                \
+                                        printf((f_), ##__VA_ARGS__);                            \
+                                    } while(0)
+
+#define LOG_FILENAME(f_, ...)   do {    printf("%s:%s:%u: \t", __FILE__, __func__, __LINE__);   \
+                                        printf((f_), ##__VA_ARGS__);                            \
+                                    } while(0)
 #else
 #define LOG(f_, ...) ;
+#define LOG_FILENAME(f_, ...) ;
 #endif
 
 #define ROOT_PATH "/"
-

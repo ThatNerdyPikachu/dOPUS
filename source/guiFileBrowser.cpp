@@ -1,9 +1,9 @@
 #include "guiFileBrowser.h"
 #include <SDL/SDLRender.h>
 #include <SDL/SDLHelper.h>
+#include <nspHelper.h>
 #include <algorithm>
 #include "gui.h"
-
 #define START_PATH ROOT_PATH
 #define FILES_PER_PAGE 8
 
@@ -125,10 +125,11 @@ void GUIFileBrowser::Update(const double timer, const u64 kDown)
             }
             else
             {
-                LOG("Installing %s... TODO :)\n", entry.name);
                 // HACK:Assuming NSP for now
                 // Do it here for now
-                //InstallNSP(std::string(entry.name));
+                std::string NSPPath = std::string(std::string("@Sdcard:/") + curDir + std::string((char*)entry.name));
+                LOG("Installing %s... TODO :)\n", NSPPath.c_str());
+                InstallNSP(NSPPath);
             }
 		}
 		else

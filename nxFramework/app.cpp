@@ -1,5 +1,6 @@
 #include "app.h"
 #include "common.h"
+#include "../tinfoil/nx/ipc/tin_ipc.h"
 
 namespace NXFramework
 {
@@ -79,10 +80,17 @@ void App::Exit()
 
 void App::Initialize_Internal()
 {
-    romfsInit();
+    if (R_FAILED(romfsInit()))        LOG("romfsInit failed!\n");
 	SDL_Init(SDL_INIT_EVERYTHING);
-	timeInitialize();
-	psmInitialize();
+    if (R_FAILED(timeInitialize()))   LOG("timeInitialize failed!\n");
+    if (R_FAILED(psmInitialize()))    LOG("psmInitialize failed!\n");
+
+    if (R_FAILED(ncmextInitialize())) LOG("ncmextInitialize failed!\n");
+    if (R_FAILED(ncmInitialize()))    LOG("ncmInitialize failed!\n");
+    if (R_FAILED(nsInitialize()))     LOG("nsInitialize failed!\n");
+    if (R_FAILED(nsextInitialize()))  LOG("nsextInitialize failed!\n");
+    if (R_FAILED(esInitialize()))     LOG("esInitialize failed!\n");
+    if (R_FAILED(nifmInitialize()))   LOG("nifmInitialize failed!\n");
 
     // SDL
     SDL::Initialize(1280, 720);
@@ -108,6 +116,13 @@ void App::Shutdown_Internal()
 
 	// SDL
 	SDL::Shutdown();
+
+	nifmExit();
+    ncmextExit();
+    ncmExit();
+    nsExit();
+    nsextExit();
+    esExit();
 
 	psmExit();
 	timeExit();
