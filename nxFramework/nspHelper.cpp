@@ -86,8 +86,7 @@ void InstallTicketCert(SimpleFileSystem& simpleFS)
     certFile.Read(0x0, certBuf.get(), certSize);
 
     // Finally, let's actually import the ticket
-    if(R_FAILED(esImportTicket(tikBuf.get(), tikSize, certBuf.get(), certSize)))
-        LOG("Failed to import ticket\n");
+    ASSERT_OK(esImportTicket(tikBuf.get(), tikSize, certBuf.get(), certSize), "Failed to import ticket\n");
 }
 
 void InstallContentMetaRecords(tin::util::ByteBuffer&     installContentMetaBuf,
@@ -98,12 +97,9 @@ void InstallContentMetaRecords(tin::util::ByteBuffer&     installContentMetaBuf,
     NcmMetaRecord contentMetaKey = contentMeta.GetContentMetaKey();
     try
     {
-        if(R_FAILED(ncmOpenContentMetaDatabase(destStorageId, &contentMetaDatabase)))
-            LOG("Failed to open content meta database\n");
-        if(R_FAILED(ncmContentMetaDatabaseSet(&contentMetaDatabase, &contentMetaKey, installContentMetaBuf.GetSize(), (NcmContentMetaRecordsHeader*)installContentMetaBuf.GetData())))
-            LOG("Failed to set content records\n");
-        if(R_FAILED(ncmContentMetaDatabaseCommit(&contentMetaDatabase)))
-            LOG("Failed to commit content records\n");
+        ASSERT_OK(ncmOpenContentMetaDatabase(destStorageId, &contentMetaDatabase), "Failed to open content meta database\n");
+        ASSERT_OK(ncmContentMetaDatabaseSet(&contentMetaDatabase, &contentMetaKey, installContentMetaBuf.GetSize(), (NcmContentMetaRecordsHeader*)installContentMetaBuf.GetData()), "Failed to set content records\n");
+        ASSERT_OK(ncmContentMetaDatabaseCommit(&contentMetaDatabase), "Failed to commit content records\n");
     }
     catch (std::runtime_error& e)
     {
@@ -139,9 +135,7 @@ void InstallApplicationRecord(nx::ncm::ContentMeta& contentMeta, const FsStorage
         auto contentStorageBuf          = std::make_unique<ContentStorageRecord[]>(contentMetaCount);
         u32 entriesRead;
 
-        if (R_FAILED(nsListApplicationRecordContentMeta(0, baseTitleId, contentStorageBuf.get(), contentStorageBufSize, &entriesRead)))
-            LOG("Failed to list application record content meta\n");
-
+        ASSERT_OK(nsListApplicationRecordContentMeta(0, baseTitleId, contentStorageBuf.get(), contentStorageBufSize, &entriesRead),"Failed to list application record content meta\n");
         if (entriesRead != contentMetaCount)
         {
             throw std::runtime_error("Mismatch between entries read and content meta count\n");
@@ -162,8 +156,7 @@ void InstallApplicationRecord(nx::ncm::ContentMeta& contentMeta, const FsStorage
     }
     catch (...) {}
     LOG("Pushing application record...\n");
-    if (R_FAILED(nsPushApplicationRecord(baseTitleId, 0x3, storageRecords.data(), storageRecords.size() * sizeof(ContentStorageRecord))))
-        LOG("Failed to push application record\n");
+    ASSERT_OK(nsPushApplicationRecord(baseTitleId, 0x3, storageRecords.data(), storageRecords.size() * sizeof(ContentStorageRecord)), "Failed to push application record\n");
 }
 
 void InstallNCA(SimpleFileSystem& simpleFS, const NcmNcaId& ncaId, const FsStorageId destStorageId)

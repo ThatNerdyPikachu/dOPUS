@@ -22,9 +22,8 @@ namespace nx::fs
     void IFile::Read(u64 offset, void* buf, size_t size)
     {
         u64 sizeRead;
-        if(R_FAILED(fsFileRead(&m_file, offset, buf, size, &sizeRead)))
-            LOG("Failed to read file\n");
-
+        ASSERT_OK(fsFileRead(&m_file, offset, buf, size, &sizeRead), "Failed to read file");
+        
         if (sizeRead != size)
         {
             std::string msg = "Size read " + std::string("" + sizeRead) + " doesn't match expected size " + std::string("" + size);
@@ -35,15 +34,14 @@ namespace nx::fs
     u64 IFile::GetSize()
     {
         u64 sizeOut;
-        if(R_FAILED(fsFileGetSize(&m_file, &sizeOut)))
-            LOG("Failed to get file size\n");
+        ASSERT_OK(fsFileGetSize(&m_file, &sizeOut), "Failed to get file size");
         return sizeOut;
     }
 
     // End IFile
 
     // IDirectory
-    IDirectory::IDirectory(FsDir& dir)
+    IDirectory::IDirectory(FsDir& dir) 
     {
         m_dir = dir;
     }
@@ -56,8 +54,7 @@ namespace nx::fs
     void IDirectory::Read(u64 inval, FsDirectoryEntry* buf, size_t numEntries)
     {
         size_t entriesRead;
-        if(R_FAILED(fsDirRead(&m_dir, inval, &entriesRead, numEntries, buf)))
-        	LOG("Failed to read directory\n");
+        ASSERT_OK(fsDirRead(&m_dir, inval, &entriesRead, numEntries, buf), "Failed to read directory");
 
         /*if (entriesRead != numEntries)
         {
@@ -69,8 +66,7 @@ namespace nx::fs
     u64 IDirectory::GetEntryCount()
     {
         u64 entryCount = 0;
-        if(R_FAILED(fsDirGetEntryCount(&m_dir, &entryCount)))
-            LOG("Failed to get entry count\n");
+        ASSERT_OK(fsDirGetEntryCount(&m_dir, &entryCount), "Failed to get entry count");
         return entryCount;
     }
 
@@ -85,8 +81,7 @@ namespace nx::fs
 
     Result IFileSystem::OpenSdFileSystem()
     {
-        if(R_FAILED(fsMountSdcard(&m_fileSystem)))
-            LOG("Failed to mount sd card\n");
+        ASSERT_OK(fsMountSdcard(&m_fileSystem), "Failed to mount sd card");
         return 0;
     }
 
@@ -99,14 +94,13 @@ namespace nx::fs
         // libnx expects a FS_MAX_PATH-sized buffer
         path.reserve(FS_MAX_PATH);
 
-        std::string errorMsg = "Failed to open file system with id: " + path + "\n";
+        std::string errorMsg = "Failed to open file system with id: " + path;
         rc = fsOpenFileSystemWithId(&m_fileSystem, titleId, fileSystemType, path.c_str());
 
         if (rc == 0x236e02)
-            errorMsg = "File " + path + " is unreadable! You may have a bad dump, fs_mitm may need to be removed, or your firmware version may be too low to decrypt.\n";
+            errorMsg = "File " + path + " is unreadable! You may have a bad dump, fs_mitm may need to be removed, or your firmware version may be too low to decrypt.";
 
-        if(R_FAILED(rc))
-            LOG(errorMsg.c_str());
+        ASSERT_OK(rc, errorMsg.c_str());
     }
 
     void IFileSystem::CloseFileSystem()
@@ -123,11 +117,7 @@ namespace nx::fs
         path.reserve(FS_MAX_PATH);
 
         FsFile file;
-        if(R_FAILED(fsFsOpenFile(&m_fileSystem, path.c_str(), FS_OPEN_READ, &file)))
-        {
-            LOG(("Failed to open file " + path + "\n").c_str());
-            throw std::runtime_error(("Failed to open file " + path + "\n").c_str());
-        }
+        ASSERT_OK(fsFsOpenFile(&m_fileSystem, path.c_str(), FS_OPEN_READ, &file), ("Failed to open file " + path).c_str());
         return IFile(file);
     }
 
@@ -141,8 +131,7 @@ namespace nx::fs
         path.reserve(FS_MAX_PATH);
 
         FsDir dir;
-        if(R_FAILED(fsFsOpenDirectory(&m_fileSystem, path.c_str(), flags, &dir)))
-            LOG(("Failed to open directory " + path + "\n").c_str());
+        ASSERT_OK(fsFsOpenDirectory(&m_fileSystem, path.c_str(), flags, &dir), ("Failed to open directory " + path).c_str());
         return IDirectory(dir);
     }
-}
+}        
