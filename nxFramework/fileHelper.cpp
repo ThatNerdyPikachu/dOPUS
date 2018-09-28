@@ -72,6 +72,28 @@ void GetSizeString(char *string, u64 size)
 	sprintf(string, "%.*f %s", (i == 0) ? 0 : 2, double_size, units[i]);
 }
 
+const char* GetFileExt(const char *filename)
+{
+	const char *dot = strrchr(filename, '.');
+
+	if (!dot || dot == filename)
+		return "";
+
+	return dot + 1;
+}
+
+void GetFileBasename (char *string, const char *filename)
+{
+	const char *dot = strrchr(filename, '.');
+
+	int length = (!dot || dot == filename)?
+                    (int)strlen(filename):
+                    dot-filename;
+
+	strncpy(string, filename, length);
+	string[length] = '\0';
+}
+
 // Basically scndir implementation
 int ScanDir(const char *dir,
             std::vector<dirent *>& namelist,
@@ -100,7 +122,9 @@ int ScanDir(const char *dir,
 	return namelist.size();
 }
 
-void PopulateFiles(char* dir, std::vector<DirEntry>& dirEntries, std::vector<std::string>& extFilter)
+void PopulateFiles(const char* dir,
+                   std::vector<DirEntry>& dirEntries,
+                   std::vector<std::string>& extFilter)
 {
 	char path[512];
     dirEntries.clear();
@@ -213,16 +237,6 @@ int Navigate(char* cwd, DirEntry& entry, bool up)
 	}
     LOG("Navigate newDir: %s\n", cwd);
 	return 0; // Return success
-}
-
-const char* GetFileExt(const char *filename)
-{
-	const char *dot = strrchr(filename, '.');
-
-	if (!dot || dot == filename)
-		return "";
-
-	return dot + 1;
 }
 
 }

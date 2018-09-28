@@ -17,15 +17,16 @@ struct DirEntry
 	u64  size;          // File size
 };
 
-u64  GetFileSize    (const char* filename);
-void GetSizeString  (char* string, u64 size);
+void        GetFileBasename (char *string, const char *filename);
+void        GetSizeString   (char* string, u64 size);
+u64         GetFileSize     (const char* filename);
+const char* GetFileExt      (const char *filename);
+
 int  Navigate       (char* cwd, DirEntry& entry, bool parent);
-void PopulateFiles  (char* dir,
+void PopulateFiles  (const char* dir,
                      std::vector<DirEntry>&    dirEntries,
                      std::vector<std::string>& extFilter);
 int  ScanDir        (const char *dir,
                      std::vector<dirent *>& namelist,
                      int (*compar)(const dirent **, const dirent **));
-const char* GetFileExt(const char *filename);
-
 }

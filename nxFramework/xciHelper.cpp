@@ -1,4 +1,5 @@
 #include "xciHelper.h"
+#include "filehelper.h"
 
 extern "C" {
 #include <getopt.h>
@@ -34,6 +35,14 @@ cnmt_addons_ctx_t addons_cnmt_ctx;
 
 int ConvertXCI(const std::string& filename)
 {
+    // TODO
+    char nspFilename[1024];
+    NXFramework::GetFileBasename(nspFilename, filename.c_str());
+    strcat(nspFilename, ".nsp");
+    printf("Input XCI filename: %s\n", filename.c_str());
+    printf("Output NSP filename: %s\n", nspFilename);
+    // TODO
+
     nxci_ctx_t tool_ctx;
     char input_name[0x200];
 
