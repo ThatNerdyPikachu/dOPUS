@@ -26,6 +26,6 @@ namespace tin::util
     void ByteBuffer::DebugPrintContents()
     {
         LOG("Buffer Size: 0x%lx\n", this->GetSize());
-//        printBytes(nxlinkout, this->GetData(), this->GetSize(), true); //TODO
+        printBytes(this->GetData(), this->GetSize(), true);
     }
 }

@@ -11,8 +11,7 @@ using namespace tin::install::nsp;
 
 void DebugPrintInstallData(nx::ncm::ContentMeta& contentMeta, const FsStorageId destStorageId)
 {
-    #ifdef DEBUG
-
+#ifdef DEBUG
     NcmContentMetaDatabase contentMetaDatabase;
     NcmMetaRecord metaRecord = contentMeta.GetContentMetaKey();
     u64 baseTitleId = tin::util::GetBaseTitleId(metaRecord.titleId, static_cast<nx::ncm::ContentMetaType>(metaRecord.type));
@@ -89,8 +88,7 @@ void DebugPrintInstallData(nx::ncm::ContentMeta& contentMeta, const FsStorageId 
         serviceClose(&contentMetaDatabase.s);
         LOG("Failed to log install data. Error: %s", e.what());
     }
-
-    #endif
+#endif
 }
 
 std::tuple<std::string, nx::ncm::ContentRecord> GetCNMTNCAInfo(std::string nspPath)
@@ -289,7 +287,7 @@ void InstallNCA(SimpleFileSystem& simpleFS, const NcmNcaId& ncaId, const FsStora
         progress = (float)fileOff / (float)ncaSize;
 
         if (fileOff % (0x400000 * 3) == 0)
-            LOG("> Progress: %lu/%lu MB (%d%s)\r", (fileOff / 1000000), (ncaSize / 1000000), (int)(progress * 100.0), "%");
+            LOG("> Progress: %lu/%lu MB (%d%s)\n", (fileOff / 1000000), (ncaSize / 1000000), (int)(progress * 100.0), "%");
 
         if (fileOff + readSize >= ncaSize)
             readSize = ncaSize - fileOff;
