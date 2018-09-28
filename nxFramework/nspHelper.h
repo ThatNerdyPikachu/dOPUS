@@ -33,3 +33,6 @@ void InstallNCA(                tin::install::nsp::SimpleFileSystem&        simp
 bool InstallNSP(                const std::string&                          filename,
                                 const FsStorageId                           destStorageId        = FsStorageId_SdCard, // FsStorageId_SdCard or FsStorageId_NandUser
                                 const bool                                  ignoreReqFirmVersion = true);
+
+void DebugPrintInstallData(     nx::ncm::ContentMeta& contentMeta,
+                                const FsStorageId destStorageId);

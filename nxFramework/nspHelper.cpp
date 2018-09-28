@@ -9,59 +9,143 @@
 using namespace tin::install::nsp;
 
 
-  std::tuple<std::string, nx::ncm::ContentRecord> GetCNMTNCAInfo(std::string nspPath)
+void DebugPrintInstallData(nx::ncm::ContentMeta& contentMeta, const FsStorageId destStorageId)
+{
+    #ifdef DEBUG
+
+    NcmContentMetaDatabase contentMetaDatabase;
+    NcmMetaRecord metaRecord = contentMeta.GetContentMetaKey();
+    u64 baseTitleId = tin::util::GetBaseTitleId(metaRecord.titleId, static_cast<nx::ncm::ContentMetaType>(metaRecord.type));
+    u64 updateTitleId = baseTitleId ^ 0x800;
+    bool hasUpdate = true;
+
+    try
     {
-        // Open filesystem
-        nx::fs::IFileSystem fileSystem;
-        std::string nspExt          = ".nsp";
-        std::string rootPath        = "/";
-        std::string absolutePath    = nspPath + "/";
+        NcmMetaRecord latestApplicationContentMetaKey;
+        NcmMetaRecord latestPatchContentMetaKey;
 
-        // Check if this is an nsp file
-        if (nspPath.compare(nspPath.size() - nspExt.size(), nspExt.size(), nspExt) == 0)
+        ASSERT_OK(ncmOpenContentMetaDatabase(destStorageId, &contentMetaDatabase), "Failed to open content meta database");
+        ASSERT_OK(ncmContentMetaDatabaseGetLatestContentMetaKey(&contentMetaDatabase, baseTitleId, &latestApplicationContentMetaKey), "Failed to get latest application content meta key");
+
+        try
         {
-            fileSystem.OpenFileSystemWithId(nspPath, FsFileSystemType_ApplicationPackage, 0);
+            ASSERT_OK(ncmContentMetaDatabaseGetLatestContentMetaKey(&contentMetaDatabase, updateTitleId, &latestPatchContentMetaKey), "Failed to get latest patch content meta key");
         }
-        else // Otherwise assume this is an extracted NSP directory
+        catch (std::exception& e)
         {
-            fileSystem.OpenSdFileSystem();
-            rootPath        = nspPath.substr(9) + "/";
-            absolutePath    = nspPath + "/";
+            hasUpdate = false;
         }
-        tin::install::nsp::SimpleFileSystem simpleFS(fileSystem, rootPath, absolutePath);
 
-        // Create the path of the cnmt NCA
-        auto cnmtNCAName        = simpleFS.GetFileNameFromExtension("", "cnmt.nca");
-        auto cnmtNCAFile        = simpleFS.OpenFile(cnmtNCAName);
-        auto cnmtNCAFullPath    = simpleFS.m_absoluteRootPath + cnmtNCAName;
-        u64 cnmtNCASize         = cnmtNCAFile.GetSize();
+        u64 appContentRecordSize;
+        u64 appContentRecordSizeRead;
+        ASSERT_OK(ncmContentMetaDatabaseGetSize(&contentMetaDatabase, &latestApplicationContentMetaKey, &appContentRecordSize), "Failed to get application content record size");
 
-        // Prepare cnmt content record
-        nx::ncm::ContentRecord contentRecord;
-        contentRecord.ncaId         = tin::util::GetNcaIdFromString(cnmtNCAName);
-        *(u64*)contentRecord.size   = cnmtNCASize & 0xFFFFFFFFFFFF;
-        contentRecord.contentType   = nx::ncm::ContentType::META;
-        return { cnmtNCAFullPath, contentRecord };
+        auto appContentRecordBuf = std::make_unique<u8[]>(appContentRecordSize);
+        ASSERT_OK(ncmContentMetaDatabaseGet(&contentMetaDatabase, &latestApplicationContentMetaKey, appContentRecordSize, (NcmContentMetaRecordsHeader*)appContentRecordBuf.get(), &appContentRecordSizeRead), "Failed to get app content record size");
+
+        if (appContentRecordSize != appContentRecordSizeRead)
+        {
+            throw std::runtime_error("Mismatch between app content record size and content record size read");
+        }
+
+        LOG("Application content meta key: \n");
+        printBytes((u8*)&latestApplicationContentMetaKey, sizeof(NcmMetaRecord), true);
+        LOG("Application content meta: \n");
+        printBytes(appContentRecordBuf.get(), appContentRecordSize, true);
+
+        if (hasUpdate)
+        {
+            u64 patchContentRecordsSize;
+            u64 patchContentRecordSizeRead;
+            ASSERT_OK(ncmContentMetaDatabaseGetSize(&contentMetaDatabase, &latestPatchContentMetaKey, &patchContentRecordsSize), "Failed to get patch content record size");
+
+            auto patchContentRecordBuf = std::make_unique<u8[]>(patchContentRecordsSize);
+            ASSERT_OK(ncmContentMetaDatabaseGet(&contentMetaDatabase, &latestPatchContentMetaKey, patchContentRecordsSize, (NcmContentMetaRecordsHeader*)patchContentRecordBuf.get(), &patchContentRecordSizeRead), "Failed to get patch content record size");
+
+            if (patchContentRecordsSize != patchContentRecordSizeRead)
+            {
+                throw std::runtime_error("Mismatch between app content record size and content record size read");
+            }
+
+            LOG("Patch content meta key: \n");
+            printBytes((u8*)&latestPatchContentMetaKey, sizeof(NcmMetaRecord), true);
+            LOG("Patch content meta: \n");
+            printBytes(patchContentRecordBuf.get(), patchContentRecordsSize, true);
+        }
+        else
+        {
+            LOG("No update records found, or an error occurred.\n");
+        }
+
+        auto appRecordBuf = std::make_unique<u8[]>(0x100);
+        u32 numEntriesRead;
+        ASSERT_OK(nsListApplicationRecordContentMeta(0, baseTitleId, appRecordBuf.get(), 0x100, &numEntriesRead), "Failed to list application record content meta");
+
+        LOG("Application record content meta: \n");
+        printBytes(appRecordBuf.get(), 0x100, true);
+    }
+    catch (std::runtime_error& e)
+    {
+        serviceClose(&contentMetaDatabase.s);
+        LOG("Failed to log install data. Error: %s", e.what());
     }
 
-    nx::ncm::ContentMeta GetContentMetaFromNCA(std::string& ncaPath)
+    #endif
+}
+
+std::tuple<std::string, nx::ncm::ContentRecord> GetCNMTNCAInfo(std::string nspPath)
+{
+    // Open filesystem
+    nx::fs::IFileSystem fileSystem;
+    std::string nspExt          = ".nsp";
+    std::string rootPath        = "/";
+    std::string absolutePath    = nspPath + "/";
+
+    // Check if this is an nsp file
+    if (nspPath.compare(nspPath.size() - nspExt.size(), nspExt.size(), nspExt) == 0)
     {
-        // Create the cnmt filesystem
-        nx::fs::IFileSystem cnmtNCAFileSystem;
-        cnmtNCAFileSystem.OpenFileSystemWithId(ncaPath, FsFileSystemType_ContentMeta, 0);
-        tin::install::nsp::SimpleFileSystem cnmtNCASimpleFileSystem(cnmtNCAFileSystem, "/", ncaPath + "/");
-
-        // Find and read the cnmt file
-        auto cnmtName = cnmtNCASimpleFileSystem.GetFileNameFromExtension("", "cnmt");
-        auto cnmtFile = cnmtNCASimpleFileSystem.OpenFile(cnmtName);
-        u64 cnmtSize  = cnmtFile.GetSize();
-
-        tin::util::ByteBuffer cnmtBuf;
-        cnmtBuf.Resize(cnmtSize);
-        cnmtFile.Read(0x0, cnmtBuf.GetData(), cnmtSize);
-
-        return nx::ncm::ContentMeta(cnmtBuf.GetData(), cnmtBuf.GetSize());
+        fileSystem.OpenFileSystemWithId(nspPath, FsFileSystemType_ApplicationPackage, 0);
     }
+    else // Otherwise assume this is an extracted NSP directory
+    {
+        fileSystem.OpenSdFileSystem();
+        rootPath        = nspPath.substr(9) + "/";
+        absolutePath    = nspPath + "/";
+    }
+    tin::install::nsp::SimpleFileSystem simpleFS(fileSystem, rootPath, absolutePath);
+
+    // Create the path of the cnmt NCA
+    auto cnmtNCAName        = simpleFS.GetFileNameFromExtension("", "cnmt.nca");
+    auto cnmtNCAFile        = simpleFS.OpenFile(cnmtNCAName);
+    auto cnmtNCAFullPath    = simpleFS.m_absoluteRootPath + cnmtNCAName;
+    u64 cnmtNCASize         = cnmtNCAFile.GetSize();
+
+    // Prepare cnmt content record
+    nx::ncm::ContentRecord contentRecord;
+    contentRecord.ncaId         = tin::util::GetNcaIdFromString(cnmtNCAName);
+    *(u64*)contentRecord.size   = cnmtNCASize & 0xFFFFFFFFFFFF;
+    contentRecord.contentType   = nx::ncm::ContentType::META;
+    return { cnmtNCAFullPath, contentRecord };
+}
+
+nx::ncm::ContentMeta GetContentMetaFromNCA(std::string& ncaPath)
+{
+    // Create the cnmt filesystem
+    nx::fs::IFileSystem cnmtNCAFileSystem;
+    cnmtNCAFileSystem.OpenFileSystemWithId(ncaPath, FsFileSystemType_ContentMeta, 0);
+    tin::install::nsp::SimpleFileSystem cnmtNCASimpleFileSystem(cnmtNCAFileSystem, "/", ncaPath + "/");
+
+    // Find and read the cnmt file
+    auto cnmtName = cnmtNCASimpleFileSystem.GetFileNameFromExtension("", "cnmt");
+    auto cnmtFile = cnmtNCASimpleFileSystem.OpenFile(cnmtName);
+    u64 cnmtSize  = cnmtFile.GetSize();
+
+    tin::util::ByteBuffer cnmtBuf;
+    cnmtBuf.Resize(cnmtSize);
+    cnmtFile.Read(0x0, cnmtBuf.GetData(), cnmtSize);
+
+    return nx::ncm::ContentMeta(cnmtBuf.GetData(), cnmtBuf.GetSize());
+}
 
 std::tuple<nx::ncm::ContentMeta, nx::ncm::ContentRecord> ReadCNMT(SimpleFileSystem& simpleFS)
 {
@@ -205,7 +289,7 @@ void InstallNCA(SimpleFileSystem& simpleFS, const NcmNcaId& ncaId, const FsStora
         progress = (float)fileOff / (float)ncaSize;
 
         if (fileOff % (0x400000 * 3) == 0)
-            LOG("> Progress: %lu/%lu MB (%d%s)\n", (fileOff / 1000000), (ncaSize / 1000000), (int)(progress * 100.0), "%");
+            LOG("> Progress: %lu/%lu MB (%d%s)\r", (fileOff / 1000000), (ncaSize / 1000000), (int)(progress * 100.0), "%");
 
         if (fileOff + readSize >= ncaSize)
             readSize = ncaSize - fileOff;
@@ -242,7 +326,11 @@ bool InstallNSP(const std::string& filename, const FsStorageId destStorageId, co
         fileSystem.OpenFileSystemWithId(filename, FsFileSystemType_ApplicationPackage, 0);
         SimpleFileSystem simpleFS(fileSystem, "/", filename + "/");
 
-        /////////////////// Prepare
+        ///////////////////////////////////////////////////////
+        // Prepare
+        ///////////////////////////////////////////////////////
+
+        LOG("                    \n");
         LOG("Preparing install...\n");
 
         tin::util::ByteBuffer cnmtBuf;
@@ -270,6 +358,7 @@ bool InstallNSP(const std::string& filename, const FsStorageId destStorageId, co
         InstallContentMetaRecords(installContentMetaBuf, contentMeta, destStorageId);
         InstallApplicationRecord(contentMeta, destStorageId);
 
+        LOG("                    \n");
         LOG("Installing ticket and cert...\n");
         try
         {
@@ -278,29 +367,27 @@ bool InstallNSP(const std::string& filename, const FsStorageId destStorageId, co
         catch (std::runtime_error& e)
         {
             LOG("WARNING: Ticket installation failed! This may not be an issue, depending on your usecase.\nProceed with caution!\n");
-            return false;
         }
-        ///////////////////
 
+        ///////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////
 
+        LOG("                    \n");
         LOG("Pre Install Records: \n");
-        //task.DebugPrintInstallData();
+        DebugPrintInstallData(contentMeta, destStorageId);
 
-
-        /////////////////// Begin
         LOG("Installing NCAs...\n");
         for (auto& record : contentMeta.GetContentRecords())
         {
             LOG("Installing from %s\n", tin::util::GetNcaIdString(record.ncaId).c_str());
             InstallNCA(simpleFS, record.ncaId, destStorageId);
         }
+        LOG("                    \n");
         LOG("Post Install Records: \n");
-        //this->DebugPrintInstallData();
-        ///////////////////
-
+        DebugPrintInstallData(contentMeta, destStorageId); // TODO: remove double DebugPrint
 
         LOG("Post Install Records: \n");
-        //task.DebugPrintInstallData();
+        DebugPrintInstallData(contentMeta, destStorageId);
     }
     catch (std::exception& e)
     {

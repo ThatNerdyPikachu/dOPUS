@@ -150,6 +150,7 @@ void App::Update_Internal()
 
  void App::DebugController(const u64 kDown)
  {
+    return;
     if (kDown & KEY_A)              LOG("A Pressed\n");
     if (kDown & KEY_B)              LOG("B Pressed\n");
     if (kDown & KEY_X)              LOG("X Pressed\n");
