@@ -40,10 +40,10 @@ TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	_release
 endif
 SOURCES		:=	source nxFramework nxFramework/SDL \
-				tinfoil tinfoil/nx tinfoil/nx/ipc tinfoil/util tinfoil/install \
-				4NXCI 
+				externals/Tinfoil/source externals/Tinfoil/source/nx externals/Tinfoil/source/nx/ipc \
+				externals/Tinfoil/source/util externals/Tinfoil/source/install externals/4NXCI 
 DATA		:=	data
-INCLUDES	:=	source nxFramework tinfoil 4NXCI 4NXCI/mbedtls/include
+INCLUDES	:=	source nxFramework externals/Tinfoil/include externals/4NXCI externals/4NXCI/mbedtls/include
 EXEFS_SRC	:=	exefs_src
 ROMFS		:=	romfs
 APP_TITLE   :=  dOPUS
@@ -128,7 +128,7 @@ export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 					-I$(CURDIR)/$(BUILD)
 
 export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib) \
-					-L$(CURDIR)/4NXCI/mbedtls/library
+					-L$(CURDIR)/externals/4NXCI/mbedtls/library
 
 export BUILD_EXEFS_SRC := $(TOPDIR)/$(EXEFS_SRC)
 
@@ -167,14 +167,14 @@ endif
 all: $(BUILD)
 
 $(BUILD):
-	cd 4NXCI && cd mbedtls && $(MAKE) lib
+	cd externals && cd 4NXCI && cd mbedtls && $(MAKE) lib
 	@[ -d $@ ] || mkdir -p $@
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
-	cd 4NXCI && cd mbedtls && cd library && $(MAKE) clean
+	cd externals && cd 4NXCI && cd mbedtls && cd library && $(MAKE) clean
 	@rm -fr $(BUILD) $(TARGET).pfs0 $(TARGET).nso $(TARGET).nro $(TARGET).nacp $(TARGET).elf
 
 #---------------------------------------------------------------------------------

@@ -1,6 +1,7 @@
-#include "title_util.hpp"
-#include <../nxFramework/common.h>
+#include "util/title_util.hpp"
+
 #include <machine/endian.h>
+#include <common.h>
 
 namespace tin::util
 {
@@ -60,13 +61,13 @@ namespace tin::util
 
         if (R_FAILED(rc = nsGetApplicationControlData(0x1, baseTitleId, &appControlData, sizeof(NsApplicationControlData), &sizeRead)))
         {
-            LOG("Failed to get application control data. Error code: 0x%08x\n", rc);
+            LOG_DEBUG("Failed to get application control data. Error code: 0x%08x\n", rc);
             return "Unknown";
         }
 
         if (sizeRead < sizeof(appControlData.nacp))
         {
-            LOG("Incorrect size for nacp\n");
+            LOG_DEBUG("Incorrect size for nacp\n");
             return "Unknown";
         }
 
@@ -74,13 +75,13 @@ namespace tin::util
 
         if (R_FAILED(rc = nacpGetLanguageEntry(&appControlData.nacp, &languageEntry)))
         {
-            LOG("Failed to get language entry. Error code: 0x%08x\n", rc);
+            LOG_DEBUG("Failed to get language entry. Error code: 0x%08x\n", rc);
             return "Unknown";
         }
 
         if (languageEntry == NULL)
         {
-            LOG("Language entry is null! Error code: 0x%08x\n", rc);
+            LOG_DEBUG("Language entry is null! Error code: 0x%08x\n", rc);
             return "Unknown";
         }
 

@@ -1,5 +1,5 @@
 #include "nx/ncm.hpp"
-#include "../../nxFramework/common.h"
+#include <common.h>
 
 namespace nx::ncm
 {

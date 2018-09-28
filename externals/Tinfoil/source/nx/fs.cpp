@@ -1,9 +1,8 @@
 #include "nx/fs.hpp"
 
-#include "../../nxFramework/common.h"
 #include <cstring>
-#include <stdexcept>
 #include "nx/ipc/tin_ipc.h"
+#include <common.h>
 
 namespace nx::fs
 {

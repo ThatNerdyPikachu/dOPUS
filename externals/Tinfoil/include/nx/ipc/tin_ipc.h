@@ -4,9 +4,9 @@
 extern "C" {
 #endif
 
-#include "es.h"
-#include "ncm_ext.h"
-#include "ns_ext.h"
+#include "nx/ipc/es.h"
+#include "nx/ipc/ncm_ext.h"
+#include "nx/ipc/ns_ext.h"
 
 #ifdef __cplusplus
 }

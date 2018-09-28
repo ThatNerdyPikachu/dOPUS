@@ -2,7 +2,7 @@
 
 #include <string>
 #include <switch.h>
-#include "ipc/tin_ipc.h"
+#include "nx/ipc/tin_ipc.h"
 
 namespace nx::fs
 {

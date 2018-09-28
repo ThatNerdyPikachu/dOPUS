@@ -1,8 +1,8 @@
 #include "nx/content_meta.hpp"
-#include "../../nxFramework/common.h"
+
 #include <string.h>
-#include "../util/title_util.hpp"
-#include <stdexcept>
+#include "util/title_util.hpp"
+#include <common.h>
 
 namespace nx::ncm
 {
@@ -75,9 +75,9 @@ namespace nx::ncm
         installContentMetaBuffer.Append<InstallContentMetaHeader>(installContentMetaHeader);
 
         // Setup the meta extended header
-        LOG("Install content meta pre size: 0x%lx\n", installContentMetaBuffer.GetSize());
+        LOG_DEBUG("Install content meta pre size: 0x%lx\n", installContentMetaBuffer.GetSize());
         installContentMetaBuffer.Resize(installContentMetaBuffer.GetSize() + contentMetaHeader.extendedHeaderSize);
-        LOG("Install content meta post size: 0x%lx\n", installContentMetaBuffer.GetSize());
+        LOG_DEBUG("Install content meta post size: 0x%lx\n", installContentMetaBuffer.GetSize());
         auto* extendedHeaderSourceBytes = m_bytes.GetData() + sizeof(ContentMetaHeader);
         u8* installExtendedHeaderStart = installContentMetaBuffer.GetData() + sizeof(InstallContentMetaHeader);
         memcpy(installExtendedHeaderStart, extendedHeaderSourceBytes, contentMetaHeader.extendedHeaderSize);

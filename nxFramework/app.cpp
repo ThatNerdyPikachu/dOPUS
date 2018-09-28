@@ -1,6 +1,6 @@
 #include "app.h"
 #include "common.h"
-#include "../tinfoil/nx/ipc/tin_ipc.h"
+#include "../externals/Tinfoil/include/nx/ipc/tin_ipc.h"
 
 namespace NXFramework
 {

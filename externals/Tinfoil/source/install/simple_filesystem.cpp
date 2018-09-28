@@ -1,10 +1,9 @@
-#include "simple_filesystem.hpp"
-#include <common.h>
+#include "install/simple_filesystem.hpp"
 
 #include <exception>
 #include <memory>
-#include <nx/fs.hpp>
-
+#include "nx/fs.hpp"
+#include <common.h>
 
 namespace tin::install::nsp
 {
@@ -23,7 +22,7 @@ namespace tin::install::nsp
     {
         try
         {
-        	LOG(("Attempting to find file at " + m_rootPath + path + "\n").c_str());
+            LOG_DEBUG(("Attempting to find file at " + m_rootPath + path + "\n").c_str());
             m_fileSystem->OpenFile(m_rootPath + path);
             return true;
         }

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <functional>
-#include <nx/fs.hpp>
+#include "nx/fs.hpp"
 
 namespace tin::install::nsp
 {

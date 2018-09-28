@@ -1,5 +1,6 @@
-#include "byte_buffer.hpp"
-#include <../nxFramework/common.h>
+#include "util/byte_buffer.hpp"
+
+#include <common.h>
 
 namespace tin::util
 {

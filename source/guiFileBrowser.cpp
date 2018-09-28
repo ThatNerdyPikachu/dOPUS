@@ -2,8 +2,8 @@
 #include <SDL/SDLRender.h>
 #include <SDL/SDLHelper.h>
 #include <nspHelper.h>
+#include <xciHelper.h>
 #include <algorithm>
-#include "../4NXCI/xciHelper.h"
 #include "gui.h"
 #define START_PATH ROOT_PATH
 #define FILES_PER_PAGE 8
