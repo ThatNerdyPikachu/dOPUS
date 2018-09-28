@@ -3,6 +3,7 @@
 #include <SDL/SDLHelper.h>
 #include <nspHelper.h>
 #include <algorithm>
+#include "../4NXCI/xciHelper.h"
 #include "gui.h"
 #define START_PATH ROOT_PATH
 #define FILES_PER_PAGE 8
@@ -125,11 +126,20 @@ void GUIFileBrowser::Update(const double timer, const u64 kDown)
             }
             else
             {
-                // HACK:Assuming NSP for now
                 // Do it here for now
-                std::string NSPPath = std::string(std::string("@Sdcard:/") + curDir + std::string((char*)entry.name));
-                LOG("Installing %s... TODO :)\n", NSPPath.c_str());
-                InstallNSP(NSPPath);
+                if(strncasecmp(GetFileExt((char*)entry.name), "nsp", 3) == 0)
+                {
+                    std::string NSPPath = std::string(std::string("@Sdcard:/") + curDir + std::string((char*)entry.name));
+                    LOG("Installing %s... TODO :)\n", NSPPath.c_str());
+                    InstallNSP(NSPPath);
+                }
+                else
+                if(strncasecmp(GetFileExt((char*)entry.name), "xci", 3) == 0)
+                {
+                    std::string XCIPath = std::string(curDir + std::string((char*)entry.name));
+                    LOG("Converting %s... TODO :)\n", XCIPath.c_str());
+                    ConvertXCI(XCIPath);
+                }
             }
 		}
 		else

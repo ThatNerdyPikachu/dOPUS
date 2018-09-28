@@ -215,5 +215,14 @@ int Navigate(char* cwd, DirEntry& entry, bool up)
 	return 0; // Return success
 }
 
+const char* GetFileExt(const char *filename)
+{
+	const char *dot = strrchr(filename, '.');
+
+	if (!dot || dot == filename)
+		return "";
+
+	return dot + 1;
+}
 
 }

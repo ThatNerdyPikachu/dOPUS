@@ -3,7 +3,7 @@
 #include <utility>
 #include "../nxFramework/SDL/SDLRender.h"
 #include "../nxFramework/SDL/SDLHelper.h"
-#include "../nxFramework/utils.h"
+#include "../nxFramework/nxUtils.h"
 #include "guiFileBrowser.h"
 
 using namespace NXFramework;

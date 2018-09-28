@@ -39,9 +39,11 @@ else
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	_release
 endif
-SOURCES		:=	source nxFramework nxFramework/SDL tinfoil tinfoil/nx tinfoil/nx/ipc tinfoil/util tinfoil/install
+SOURCES		:=	source nxFramework nxFramework/SDL \
+				tinfoil tinfoil/nx tinfoil/nx/ipc tinfoil/util tinfoil/install \
+				4NXCI 
 DATA		:=	data
-INCLUDES	:=	source nxFramework tinfoil
+INCLUDES	:=	source nxFramework tinfoil 4NXCI 4NXCI/mbedtls/include
 EXEFS_SRC	:=	exefs_src
 ROMFS		:=	romfs
 APP_TITLE   :=  dOPUS
@@ -57,6 +59,7 @@ ARCH	:=	-march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIE
 CFLAGS	:=	-g -Wall -ffunction-sections `sdl2-config --cflags` `freetype-config --cflags` \
 			$(ARCH) $(DEFINES)
 CFLAGS	+=	$(INCLUDE) -D__SWITCH__
+CFLAGS	+=	-D_BSD_SOURCE -D_POSIX_SOURCE -D_POSIX_C_SOURCE=200112L -D_DEFAULT_SOURCE -D__USE_MINGW_ANSI_STDIO=1 -D_FILE_OFFSET_BITS=64
 
 ifeq ($(DEBUG), 1)
 CFLAGS   += -O0 -DDEBUG
@@ -65,12 +68,14 @@ CFLAGS   += -O2 -DNDEBUG
 endif
 
 CXXFLAGS	:= $(CFLAGS) -std=gnu++17 -Wformat-truncation=0
+CXXFLAGS+= -D_BSD_SOURCE -D_POSIX_SOURCE -D_POSIX_C_SOURCE=200112L -D_DEFAULT_SOURCE -D__USE_MINGW_ANSI_STDIO=1 -D_FILE_OFFSET_BITS=64
 
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
 LIBS	:=	-lSDL2_ttf -lSDL2_gfx -lSDL2_image \
-			-lpng -ljpeg `sdl2-config --libs` `freetype-config --libs` -lnx
+			-lpng -ljpeg `sdl2-config --libs` `freetype-config --libs` -lnx  \
+			-lmbedtls -lmbedcrypto -lmbedx509
 
 
 #---------------------------------------------------------------------------------
@@ -90,7 +95,7 @@ export OUTPUT	:=	$(CURDIR)/$(TARGET)
 export TOPDIR	:=	$(CURDIR)
 
 export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
-			$(foreach dir,$(DATA),$(CURDIR)/$(dir))
+					$(foreach dir,$(DATA),$(CURDIR)/$(dir))
 
 export DEPSDIR	:=	$(CURDIR)/$(BUILD)
 
@@ -115,14 +120,15 @@ endif
 
 export OFILES_BIN	:=	$(addsuffix .o,$(BINFILES))
 export OFILES_SRC	:=	$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
-export OFILES 	:=	$(OFILES_BIN) $(OFILES_SRC)
+export OFILES 		:=	$(OFILES_BIN) $(OFILES_SRC)
 export HFILES_BIN	:=	$(addsuffix .h,$(subst .,_,$(BINFILES)))
 
 export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
-			$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
-			-I$(CURDIR)/$(BUILD)
+					$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
+					-I$(CURDIR)/$(BUILD)
 
-export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
+export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib) \
+					-L$(CURDIR)/4NXCI/mbedtls/library
 
 export BUILD_EXEFS_SRC := $(TOPDIR)/$(EXEFS_SRC)
 
@@ -161,12 +167,14 @@ endif
 all: $(BUILD)
 
 $(BUILD):
+	cd 4NXCI && cd mbedtls && $(MAKE) lib
 	@[ -d $@ ] || mkdir -p $@
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
+	cd 4NXCI && cd mbedtls && cd library && $(MAKE) clean
 	@rm -fr $(BUILD) $(TARGET).pfs0 $(TARGET).nso $(TARGET).nro $(TARGET).nacp $(TARGET).elf
 
 #---------------------------------------------------------------------------------

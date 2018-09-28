@@ -26,6 +26,6 @@ void PopulateFiles  (char* dir,
 int  ScanDir        (const char *dir,
                      std::vector<dirent *>& namelist,
                      int (*compar)(const dirent **, const dirent **));
-
+const char* GetFileExt(const char *filename);
 
 }
