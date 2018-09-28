@@ -1,4 +1,4 @@
-#include "../nxFramework/common.h"
+#include <common.h>
 #include "appInstaller.h"
 
 using namespace NXFramework;

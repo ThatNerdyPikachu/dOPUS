@@ -1,7 +1,7 @@
 #pragma once
 #include <common.h>
 #include <string>
-#include "../externals/Tinfoil/include/nx/content_meta.hpp"
+#include <Tinfoil/include/nx/content_meta.hpp>
 
 namespace tin::util
 {

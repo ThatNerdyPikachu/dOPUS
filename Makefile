@@ -41,9 +41,10 @@ BUILD		:=	_release
 endif
 SOURCES		:=	source nxFramework nxFramework/SDL \
 				externals/Tinfoil/source externals/Tinfoil/source/nx externals/Tinfoil/source/nx/ipc \
-				externals/Tinfoil/source/util externals/Tinfoil/source/install externals/4NXCI 
+				externals/Tinfoil/source/util externals/Tinfoil/source/install externals/4NXCI
 DATA		:=	data
-INCLUDES	:=	source nxFramework externals/Tinfoil/include externals/4NXCI externals/4NXCI/mbedtls/include
+INCLUDES	:=	./ source nxFramework externals externals/Tinfoil/include \
+				externals/4NXCI externals/4NXCI/mbedtls/include
 EXEFS_SRC	:=	exefs_src
 ROMFS		:=	romfs
 APP_TITLE   :=  dOPUS

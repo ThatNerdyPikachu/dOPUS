@@ -1,8 +1,8 @@
 #include "nspHelper.h"
-#include "../externals/Tinfoil/include/install/simple_filesystem.hpp"
-#include "../externals/Tinfoil/include/nx/content_meta.hpp"
-#include "../externals/Tinfoil/include/nx/ncm.hpp"
-#include "../externals/Tinfoil/include/util/title_util.hpp"
+#include <Tinfoil/include/install/simple_filesystem.hpp>
+#include <Tinfoil/include/nx/content_meta.hpp>
+#include <Tinfoil/include/nx/ncm.hpp>
+#include <Tinfoil/include/util/title_util.hpp>
 #include <iostream>
 #include <memory>
 

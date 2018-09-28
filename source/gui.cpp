@@ -1,9 +1,9 @@
 #include "gui.h"
 
 #include <utility>
-#include "../nxFramework/SDL/SDLRender.h"
-#include "../nxFramework/SDL/SDLHelper.h"
-#include "../nxFramework/nxUtils.h"
+#include <nxFramework/SDL/SDLRender.h>
+#include <nxFramework/SDL/SDLHelper.h>
+#include <nxFramework/nxUtils.h>
 #include "guiFileBrowser.h"
 
 using namespace NXFramework;
