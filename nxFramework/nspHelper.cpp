@@ -318,13 +318,21 @@ void InstallNCA(SimpleFileSystem& simpleFS, const NcmNcaId& ncaId, const FsStora
     catch (...) {}
 }
 
-bool InstallNSP(const std::string& filename, const FsStorageId destStorageId, const bool ignoreReqFirmVersion)
+bool InstallNSP(const std::string& filename, const FsStorageId destStorageId, const bool ignoreReqFirmVersion, const bool isFolder)
 {
     try
     {
+        std::string fullPath = "@Sdcard:/" + filename;
         nx::fs::IFileSystem fileSystem;
-        fileSystem.OpenFileSystemWithId(filename, FsFileSystemType_ApplicationPackage, 0);
-        SimpleFileSystem simpleFS(fileSystem, "/", filename + "/");
+        if(isFolder)
+        {
+            fileSystem.OpenSdFileSystem();
+        }
+        else
+        {
+            fileSystem.OpenFileSystemWithId(fullPath, FsFileSystemType_ApplicationPackage, 0);
+        }
+        SimpleFileSystem simpleFS(fileSystem, isFolder?filename+"/":"/", fullPath + "/");
 
         ///////////////////////////////////////////////////////
         // Prepare
@@ -396,6 +404,16 @@ bool InstallNSP(const std::string& filename, const FsStorageId destStorageId, co
         return false;
     }
     return true;
+}
+
+bool InstallExtracted(const std::string& filename, const FsStorageId destStorageId, const bool ignoreReqFirmVersion)
+{
+    return InstallNSP(filename, destStorageId, ignoreReqFirmVersion, true);
+}
+
+bool ExtractNSP(const std::string&  filename)
+{
+
 }
 
 }

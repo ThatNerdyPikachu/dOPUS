@@ -1,4 +1,5 @@
 #include "xciHelper.h"
+#include "nspHelper.h"
 #include "filehelper.h"
 
 extern "C" {
@@ -130,6 +131,9 @@ int ExtractXCI(const std::string& filename, const bool saveNSP)
     filepath_init(&xci_ctx.tool_ctx->settings.secure_dir_path);
     filepath_set(&xci_ctx.tool_ctx->settings.secure_dir_path, outputDir);
 
+    // Clean-up dir if it exists
+    RmDirRecursive(outputDir);
+
     printf("\n");
 
     xci_process(&xci_ctx);
@@ -201,11 +205,12 @@ int InstallXCI(const std::string& filename, const FsStorageId destStorageId, con
     ExtractXCI(filename);
 
     // Install
-    // ...
+    char outputDir[MAX_PATH];
+    GetFileBasename(outputDir, filename.c_str());
+    LOG("\nInstalling folder %s...\n", outputDir);
+    InstallExtracted(std::string(outputDir));
 
     // Clean-up
-    char outputDir[MAX_PATH];
-    NXFramework::GetFileBasename(outputDir, filename.c_str());
     RmDirRecursive(outputDir);
     return 0;
 }

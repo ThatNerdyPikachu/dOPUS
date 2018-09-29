@@ -132,16 +132,21 @@ void GUIFileBrowser::Update(const double timer, const u64 kDown)
             {
                 if(strncasecmp(GetFileExt((char*)entry.name), "nsp", 3) == 0)
                 {
-                    std::string NSPPath = std::string(std::string("@Sdcard:/") + curDir + std::string((char*)entry.name));
+                    std::string NSPPath = curDir + std::string((char*)entry.name);
                     LOG("\nInstalling %s...\n", NSPPath.c_str());
                     InstallNSP(NSPPath);
                 }
                 else
                 if(strncasecmp(GetFileExt((char*)entry.name), "xci", 3) == 0)
                 {
-                    std::string XCIPath = std::string(curDir + std::string((char*)entry.name));
-                    LOG("\nInstalling %s...:)\n", XCIPath.c_str());
+                    std::string XCIPath = curDir + std::string((char*)entry.name);
+                    LOG("\nInstalling %s...\n", XCIPath.c_str());
                     InstallXCI(XCIPath);
+
+                    // Refresh folder view
+                    PopulateFiles(curDir, dirEntries, extFilters);
+                    curPosition = 0;
+                    topPosition = 0;
                 }
             }
 		}
@@ -149,11 +154,17 @@ void GUIFileBrowser::Update(const double timer, const u64 kDown)
         if (kDown & KEY_X) // Extract
         {
    		    DirEntry& entry = dirEntries[curPosition];
-		    if(!entry.isDir)
+		    if(entry.isDir)
+            {
+                std::string NCAPath = curDir + std::string((char*)entry.name);
+                LOG("\nInstalling folder %s...\n", NCAPath.c_str());
+                InstallExtracted(NCAPath.c_str());
+            }
+            else
             {
                 if(strncasecmp(GetFileExt((char*)entry.name), "nsp", 3) == 0)
                 {
-                    std::string NSPPath = std::string(std::string("@Sdcard:/") + curDir + std::string((char*)entry.name));
+                    std::string NSPPath = curDir + std::string((char*)entry.name);
                     LOG("\nExtracting %s...\n", NSPPath.c_str());
                     LOG("TODO \n\n...:)\n");
                     //ExtractNSP(NSPPath);
