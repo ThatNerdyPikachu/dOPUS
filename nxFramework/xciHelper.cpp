@@ -1,7 +1,5 @@
 #include "xciHelper.h"
 #include "filehelper.h"
-#include <iostream>
-#include <cstdint>
 
 extern "C" {
 #include <getopt.h>
@@ -34,6 +32,81 @@ nsp_ctx_t patch_nsp;
 nsp_ctx_t *addon_nsps;
 cnmt_addons_ctx_t addons_cnmt_ctx;
 
+
+void CleanUp(const xci_ctx_t& xci_ctx)
+{
+    // Clean-up temp files //
+    printf("Deleting temp files...\n");
+    for (uint32_t i = 0; i < xci_ctx.secure_ctx.header->num_files; i++)
+    {
+        filepath_t filepath;
+        filepath_init(&filepath);
+        filepath_copy(&filepath, &xci_ctx.secure_ctx.tool_ctx->settings.secure_dir_path);
+        filepath_append(&filepath, "%s", hfs0_get_file_name(xci_ctx.secure_ctx.header, i));
+        printf("Deleting %s...\n", filepath.os_path);
+        if(remove(filepath.os_path) != 0)
+            printf("Error deleting file\n");
+    }
+    // Clean-up XML files //
+    {
+        // Application
+        printf("Deleting %s...\n", application_cnmt_xml.filepath.os_path);
+        if(remove(application_cnmt_xml.filepath.char_path) != 0)
+            printf("Error deleting file\n");
+
+        // Patches
+        if (patch_cnmt.title_id != 0)
+        {
+            printf("Deleting %s...\n", patch_cnmt_xml.filepath.os_path);
+            if(remove(patch_cnmt_xml.filepath.char_path) != 0)
+                printf("Error deleting file\n");
+        }
+
+        // Addons
+        if (addons_cnmt_ctx.count != 0)
+        {
+            for (int i = 0; i < addons_cnmt_ctx.count; i++)
+            {
+                printf("Deleting %s...\n", addons_cnmt_ctx.addon_cnmt_xml[i].filepath.os_path);
+                if(remove(addons_cnmt_ctx.addon_cnmt_xml[i].filepath.char_path) != 0)
+                    printf("Error deleting file\n");
+            }
+        }
+    }
+    // Delete temp folder //
+    printf("Deleting folder %s...\n", xci_ctx.tool_ctx->settings.secure_dir_path.os_path);
+    if(rmdir(xci_ctx.tool_ctx->settings.secure_dir_path.char_path)!=0)
+        printf("Error deleting file\n");
+}
+
+// Rename NCAs to NSP NCAids
+void RenameNCAs(const xci_ctx_t& xci_ctx, const nsp_ctx_t& nsp_ctx)
+{
+    for (int i = 0; i < nsp_ctx.entry_count; i++)
+    {
+        filepath_t filepath;
+        filepath_init(&filepath);
+        filepath_copy(&filepath, &xci_ctx.secure_ctx.tool_ctx->settings.secure_dir_path);
+        filepath_append(&filepath, "%s", nsp_ctx.nsp_entry[i].nsp_filename);
+
+        // Rename nca file to nsp logical filename
+        printf("Renaming %s to %s...\n", nsp_ctx.nsp_entry[i].filepath.char_path, filepath.char_path);
+        if(rename(nsp_ctx.nsp_entry[i].filepath.char_path, filepath.char_path) != 0)
+            printf("Error renaming file\n");
+    }
+}
+
+void RenameNCAs(const xci_ctx_t& xci_ctx)
+{
+    RenameNCAs(xci_ctx, application_nsp);
+
+    if (patch_cnmt.title_id != 0)
+        RenameNCAs(xci_ctx, patch_nsp);
+
+    if (addons_cnmt_ctx.count != 0)
+        for (int i = 0; i < addons_cnmt_ctx.count; ++i)
+            RenameNCAs(xci_ctx, addon_nsps[i]);
+}
 
 int ConvertXCI(const std::string& filename)
 {
@@ -133,56 +206,15 @@ int ConvertXCI(const std::string& filename)
         for (int i2 = 0; i2 < addons_cnmt_ctx.count; i2++)
             printf("DLC NSP %i: %s\n", i2 + 1, addon_nsps[i2].filepath.char_path);
     }
-
     fclose(tool_ctx.file);
 
+    printf("\nClean-up:\n");
+
     // Clean-up
-    {
-        // Clean-up temp files //
-        printf("Deleting temp files...\n");
-        for (uint32_t i = 0; i < xci_ctx.secure_ctx.header->num_files; i++)
-        {
-            filepath_t filepath;
-            filepath_init(&filepath);
-            filepath_copy(&filepath, &xci_ctx.secure_ctx.tool_ctx->settings.secure_dir_path);
-            filepath_append(&filepath, "%s", hfs0_get_file_name(xci_ctx.secure_ctx.header, i));
-            printf("Deleting %s...\n", filepath.os_path);
-            if(remove(filepath.os_path) != 0)
-                printf("Error deleting file");
-        }
-        // Clean-up XML files //
-        {
-            // Application
-            printf("Deleting %s...\n", application_cnmt_xml.filepath.os_path);
-            if(remove(application_cnmt_xml.filepath.char_path) != 0)
-                printf("Error deleting file");
+    CleanUp(xci_ctx);
 
-            // Patches
-            if (patch_cnmt.title_id != 0)
-            {
-                printf("Deleting %s...\n", patch_cnmt_xml.filepath.os_path);
-                if(remove(patch_cnmt_xml.filepath.char_path) != 0)
-                    printf("Error deleting file");
-            }
-
-            // Addons
-            if (addons_cnmt_ctx.count != 0)
-            {
-                for (int i = 0; i < addons_cnmt_ctx.count; i++)
-                {
-                    printf("Deleting %s...\n", addons_cnmt_ctx.addon_cnmt_xml[i].filepath.os_path);
-                    if(remove(addons_cnmt_ctx.addon_cnmt_xml[i].filepath.char_path) != 0)
-                        printf("Error deleting file");
-                }
-            }
-        }
-        // Delete temp folder //
-        printf("Deleting folder %s...\n", xci_ctx.tool_ctx->settings.secure_dir_path.os_path);
-        if(rmdir(xci_ctx.tool_ctx->settings.secure_dir_path.char_path)!=0)
-        {
-            printf("Error deleting file");
-        }
-    }
+    // Rename NCAs to NSP NCAids
+    //RenameNCAs(xci_ctx);
 
 	printf("\n");
     printf("\nDone!\n");
