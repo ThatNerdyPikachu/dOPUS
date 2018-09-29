@@ -21,6 +21,7 @@ void GUIFileBrowser::Initialize()
 {
     extFilters.push_back("nsp");
     extFilters.push_back("xci");
+    extFilters.push_back("xml");
     PopulateFiles(curDir, dirEntries, extFilters);
 }
 void GUIFileBrowser::Shutdown()

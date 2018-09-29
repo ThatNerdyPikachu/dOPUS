@@ -1,5 +1,7 @@
 #include "xciHelper.h"
 #include "filehelper.h"
+#include <iostream>
+#include <cstdint>
 
 extern "C" {
 #include <getopt.h>
@@ -35,14 +37,6 @@ cnmt_addons_ctx_t addons_cnmt_ctx;
 
 int ConvertXCI(const std::string& filename)
 {
-    // TODO
-    char nspFilename[1024];
-    NXFramework::GetFileBasename(nspFilename, filename.c_str());
-    strcat(nspFilename, ".nsp");
-    printf("Input XCI filename: %s\n", filename.c_str());
-    printf("Output NSP filename: %s\n", nspFilename);
-    // TODO
-
     nxci_ctx_t tool_ctx;
     char input_name[0x200];
 
@@ -105,22 +99,28 @@ int ConvertXCI(const std::string& filename)
 
     xci_process(&xci_ctx);
 
+    // Output NSP filename
+    char nspFilename[MAX_PATH];
+    NXFramework::GetFileBasename(nspFilename, filename.c_str());
+
     // Process ncas in cnmts
     printf("===> Processing Application Metadata:\n");
-    cnmt_gamecard_process(xci_ctx.tool_ctx, &application_cnmt_xml, &application_cnmt, &application_nsp);
+    cnmt_gamecard_process(xci_ctx.tool_ctx, &application_cnmt_xml, &application_cnmt, &application_nsp, nspFilename);
     if (patch_cnmt.title_id != 0)
     {
         printf("===> Processing Patch Metadata:\n");
-        cnmt_download_process(xci_ctx.tool_ctx, &patch_cnmt_xml, &patch_cnmt, &patch_nsp);
+        std::string nspUPDFilename(std::string(nspFilename) + std::string(" [UPD]"));
+        cnmt_download_process(xci_ctx.tool_ctx, &patch_cnmt_xml, &patch_cnmt, &patch_nsp, nspUPDFilename.c_str());
     }
     if (addons_cnmt_ctx.count != 0)
     {
         addon_nsps = (nsp_ctx_t *)calloc(1, sizeof(nsp_ctx_t) * addons_cnmt_ctx.count);
         printf("===> Processing %u Addon(s):\n", addons_cnmt_ctx.count);
+        std::string nspDLCFilename(std::string(nspFilename) + std::string(" [DLC]"));
         for (int i = 0; i < addons_cnmt_ctx.count; i++)
         {
             printf("===> Processing AddOn %i Metadata:\n", i + 1);
-            cnmt_gamecard_process(xci_ctx.tool_ctx, &addons_cnmt_ctx.addon_cnmt_xml[i], &addons_cnmt_ctx.addon_cnmt[i], &addon_nsps[i]);
+            cnmt_gamecard_process(xci_ctx.tool_ctx, &addons_cnmt_ctx.addon_cnmt_xml[i], &addons_cnmt_ctx.addon_cnmt[i], &addon_nsps[i], nspDLCFilename.c_str());
         }
     }
 
@@ -135,6 +135,56 @@ int ConvertXCI(const std::string& filename)
     }
 
     fclose(tool_ctx.file);
+
+    // Clean-up
+    {
+        // Clean-up temp files //
+        printf("Deleting temp files...\n");
+        for (uint32_t i = 0; i < xci_ctx.secure_ctx.header->num_files; i++)
+        {
+            filepath_t filepath;
+            filepath_init(&filepath);
+            filepath_copy(&filepath, &xci_ctx.secure_ctx.tool_ctx->settings.secure_dir_path);
+            filepath_append(&filepath, "%s", hfs0_get_file_name(xci_ctx.secure_ctx.header, i));
+            printf("Deleting %s...\n", filepath.os_path);
+            if(remove(filepath.os_path) != 0)
+                printf("Error deleting file");
+        }
+        // Clean-up XML files //
+        {
+            // Application
+            printf("Deleting %s...\n", application_cnmt_xml.filepath.os_path);
+            if(remove(application_cnmt_xml.filepath.char_path) != 0)
+                printf("Error deleting file");
+
+            // Patches
+            if (patch_cnmt.title_id != 0)
+            {
+                printf("Deleting %s...\n", patch_cnmt_xml.filepath.os_path);
+                if(remove(patch_cnmt_xml.filepath.char_path) != 0)
+                    printf("Error deleting file");
+            }
+
+            // Addons
+            if (addons_cnmt_ctx.count != 0)
+            {
+                for (int i = 0; i < addons_cnmt_ctx.count; i++)
+                {
+                    printf("Deleting %s...\n", addons_cnmt_ctx.addon_cnmt_xml[i].filepath.os_path);
+                    if(remove(addons_cnmt_ctx.addon_cnmt_xml[i].filepath.char_path) != 0)
+                        printf("Error deleting file");
+                }
+            }
+        }
+        // Delete temp folder //
+        printf("Deleting folder %s...\n", xci_ctx.tool_ctx->settings.secure_dir_path.os_path);
+        if(rmdir(xci_ctx.tool_ctx->settings.secure_dir_path.char_path)!=0)
+        {
+            printf("Error deleting file");
+        }
+    }
+
+	printf("\n");
     printf("\nDone!\n");
     return 1;
 }

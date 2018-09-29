@@ -57,7 +57,7 @@ void cnmt_create_xml(cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_ctx_t *cnmt_ctx, nsp_ctx
     fclose(file);
 }
 
-void cnmt_gamecard_process(nxci_ctx_t *tool, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_ctx_t *cnmt_ctx, nsp_ctx_t *nsp_ctx)
+void cnmt_gamecard_process(nxci_ctx_t *tool, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_ctx_t *cnmt_ctx, nsp_ctx_t *nsp_ctx, const char* outputFilename)
 {
     cnmt_ctx->has_rightsid = 0;
 
@@ -79,13 +79,12 @@ void cnmt_gamecard_process(nxci_ctx_t *tool, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_
     filepath_init(&cnmt_xml_ctx->filepath);
     filepath_set(&cnmt_xml_ctx->filepath, cnmt_xml_filepath);
 
-    // nsp filename = tid + .nsp
-    char *nsp_filename = (char *)calloc(1, 21);
-    strncpy(nsp_filename, cnmt_xml_ctx->title_id, 16);
-    strcat(nsp_filename, ".nsp");
+    // nsp filename = name + [tid] + [version] + .nsp
+    char nsp_filename[MAX_PATH];
+    sprintf(nsp_filename, "%s [%s][v%d].nsp", outputFilename, cnmt_xml_ctx->title_id, cnmt_xml_ctx->title_version);
+    //strncpy(nsp_filename, cnmt_xml_ctx->title_id, 16);
     filepath_init(&nsp_ctx->filepath);
     filepath_set(&nsp_ctx->filepath, nsp_filename);
-    free(nsp_filename);
 
     // nsp entries count = nca counts + .tik + .cert + .cnmmt.xml + .cnmt.nca
     nsp_ctx->nsp_entry = (nsp_entry_t *)calloc(1, sizeof(nsp_entry_t) * (cnmt_ctx->nca_count + 4));
@@ -159,7 +158,7 @@ void cnmt_gamecard_process(nxci_ctx_t *tool, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_
     nsp_create(nsp_ctx);
 }
 
-void cnmt_download_process(nxci_ctx_t *tool, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_ctx_t *cnmt_ctx, nsp_ctx_t *nsp_ctx)
+void cnmt_download_process(nxci_ctx_t *tool, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_ctx_t *cnmt_ctx, nsp_ctx_t *nsp_ctx, const char* outputFilename)
 {
     cnmt_ctx->has_rightsid = 0;
 
@@ -185,13 +184,12 @@ void cnmt_download_process(nxci_ctx_t *tool, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_
     filepath_init(&cnmt_xml_ctx->filepath);
     filepath_set(&cnmt_xml_ctx->filepath, cnmt_xml_filepath);
 
-    // nsp filename = tid + .nsp
-    char *nsp_filename = (char *)calloc(1, 21);
-    strncpy(nsp_filename, cnmt_xml_ctx->title_id, 16);
-    strcat(nsp_filename, ".nsp");
+    // nsp filename = name + [tid] + [version] + .nsp
+    char nsp_filename[MAX_PATH];
+    sprintf(nsp_filename, "%s [%s][v%d].nsp", outputFilename, cnmt_xml_ctx->title_id, cnmt_xml_ctx->title_version);
+    //strncpy(nsp_filename, cnmt_xml_ctx->title_id, 16);
     filepath_init(&nsp_ctx->filepath);
     filepath_set(&nsp_ctx->filepath, nsp_filename);
-    free(nsp_filename);
 
     // nsp entries count = nca counts + .tik + .cert + .cnmmt.xml + .cnmt.nca
     nsp_ctx->nsp_entry = (nsp_entry_t *)calloc(1, sizeof(nsp_entry_t) * (cnmt_ctx->nca_count + 4));
