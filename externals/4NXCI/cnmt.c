@@ -57,7 +57,7 @@ void cnmt_create_xml(cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_ctx_t *cnmt_ctx, nsp_ctx
     fclose(file);
 }
 
-void cnmt_gamecard_process(nxci_ctx_t *tool, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_ctx_t *cnmt_ctx, nsp_ctx_t *nsp_ctx, const char* outputFilename)
+void cnmt_gamecard_process(nxci_ctx_t *tool, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_ctx_t *cnmt_ctx, nsp_ctx_t *nsp_ctx, bool nspCreate, const char* outputFilename)
 {
     cnmt_ctx->has_rightsid = 0;
 
@@ -81,7 +81,10 @@ void cnmt_gamecard_process(nxci_ctx_t *tool, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_
 
     // nsp filename = name + [tid] + [version] + .nsp
     char nsp_filename[MAX_PATH];
-    sprintf(nsp_filename, "%s [%s][v%d].nsp", outputFilename, cnmt_xml_ctx->title_id, cnmt_xml_ctx->title_version);
+    sprintf(nsp_filename, "%s [%s][v%d].nsp",
+            outputFilename != NULL?outputFilename:"",
+            cnmt_xml_ctx->title_id,
+            cnmt_xml_ctx->title_version);
     //strncpy(nsp_filename, cnmt_xml_ctx->title_id, 16);
     filepath_init(&nsp_ctx->filepath);
     filepath_set(&nsp_ctx->filepath, nsp_filename);
@@ -155,10 +158,11 @@ void cnmt_gamecard_process(nxci_ctx_t *tool, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_
         nsp_ctx->entry_count = cnmt_ctx->nca_count + 4;
     }
     printf("\n");
-    nsp_create(nsp_ctx);
+    if(nspCreate)
+        nsp_create(nsp_ctx);
 }
 
-void cnmt_download_process(nxci_ctx_t *tool, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_ctx_t *cnmt_ctx, nsp_ctx_t *nsp_ctx, const char* outputFilename)
+void cnmt_download_process(nxci_ctx_t *tool, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_ctx_t *cnmt_ctx, nsp_ctx_t *nsp_ctx, bool nspCreate, const char* outputFilename)
 {
     cnmt_ctx->has_rightsid = 0;
 
@@ -186,7 +190,10 @@ void cnmt_download_process(nxci_ctx_t *tool, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_
 
     // nsp filename = name + [tid] + [version] + .nsp
     char nsp_filename[MAX_PATH];
-    sprintf(nsp_filename, "%s [%s][v%d].nsp", outputFilename, cnmt_xml_ctx->title_id, cnmt_xml_ctx->title_version);
+    sprintf(nsp_filename, "%s [%s][v%d].nsp",
+            outputFilename != NULL?outputFilename:"",
+            cnmt_xml_ctx->title_id,
+            cnmt_xml_ctx->title_version);
     //strncpy(nsp_filename, cnmt_xml_ctx->title_id, 16);
     filepath_init(&nsp_ctx->filepath);
     filepath_set(&nsp_ctx->filepath, nsp_filename);
@@ -266,7 +273,8 @@ void cnmt_download_process(nxci_ctx_t *tool, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_
         nsp_ctx->entry_count = cnmt_ctx->nca_count + 4;
     }
     printf("\n");
-    nsp_create(nsp_ctx);
+    if(nspCreate)
+        nsp_create(nsp_ctx);
 }
 
 char *cnmt_get_title_type(cnmt_ctx_t *cnmt_ctx)

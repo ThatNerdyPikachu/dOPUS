@@ -21,6 +21,8 @@ void GUIFileBrowser::Initialize()
 {
     extFilters.push_back("nsp");
     extFilters.push_back("xci");
+    extFilters.push_back("nca");
+    extFilters.push_back("cnmt");
     extFilters.push_back("xml");
     PopulateFiles(curDir, dirEntries, extFilters);
 }
@@ -116,7 +118,7 @@ void GUIFileBrowser::Update(const double timer, const u64 kDown)
    			topPosition = std::max(curPosition - FILES_PER_PAGE + 1, 0);
         }
         else
-        if (kDown & KEY_A)
+        if (kDown & KEY_A) // Install
 		{
 		    DirEntry& entry = dirEntries[curPosition];
 		    if(entry.isDir)
@@ -128,22 +130,72 @@ void GUIFileBrowser::Update(const double timer, const u64 kDown)
             }
             else
             {
-                // Do it here for now
                 if(strncasecmp(GetFileExt((char*)entry.name), "nsp", 3) == 0)
                 {
                     std::string NSPPath = std::string(std::string("@Sdcard:/") + curDir + std::string((char*)entry.name));
-                    LOG("Installing %s... TODO :)\n", NSPPath.c_str());
+                    LOG("\nInstalling %s...\n", NSPPath.c_str());
                     InstallNSP(NSPPath);
                 }
                 else
                 if(strncasecmp(GetFileExt((char*)entry.name), "xci", 3) == 0)
                 {
                     std::string XCIPath = std::string(curDir + std::string((char*)entry.name));
-                    LOG("Converting %s... TODO :)\n", XCIPath.c_str());
-                    ConvertXCI(XCIPath);
+                    LOG("\nInstalling %s...:)\n", XCIPath.c_str());
+                    InstallXCI(XCIPath);
                 }
             }
 		}
+		else
+        if (kDown & KEY_X) // Extract
+        {
+   		    DirEntry& entry = dirEntries[curPosition];
+		    if(!entry.isDir)
+            {
+                if(strncasecmp(GetFileExt((char*)entry.name), "nsp", 3) == 0)
+                {
+                    std::string NSPPath = std::string(std::string("@Sdcard:/") + curDir + std::string((char*)entry.name));
+                    LOG("\nExtracting %s...\n", NSPPath.c_str());
+                    LOG("TODO \n\n...:)\n");
+                    //ExtractNSP(NSPPath);
+
+                    // Refresh folder view
+                    PopulateFiles(curDir, dirEntries, extFilters);
+                    curPosition = 0;
+                    topPosition = 0;
+                }
+                else
+                if(strncasecmp(GetFileExt((char*)entry.name), "xci", 3) == 0)
+                {
+                    std::string XCIPath = std::string(curDir + std::string((char*)entry.name));
+                    LOG("\nExtracting %s...:)\n", XCIPath.c_str());
+                    ExtractXCI(XCIPath);
+
+                    // Refresh folder view
+                    PopulateFiles(curDir, dirEntries, extFilters);
+                    curPosition = 0;
+                    topPosition = 0;
+                }
+            }
+        }
+		else
+        if (kDown & KEY_Y) // Convert
+        {
+   		    DirEntry& entry = dirEntries[curPosition];
+		    if(!entry.isDir)
+            {
+                if(strncasecmp(GetFileExt((char*)entry.name), "xci", 3) == 0)
+                {
+                    std::string XCIPath = std::string(curDir + std::string((char*)entry.name));
+                    LOG("\nConverting %s...\n", XCIPath.c_str());
+                    ConvertXCI(XCIPath);
+
+                    // Refresh folder view
+                    PopulateFiles(curDir, dirEntries, extFilters);
+                    curPosition = 0;
+                    topPosition = 0;
+                }
+            }
+        }
 		else
 		if ((strcmp(curDir, ROOT_PATH) != 0) && (kDown & KEY_B))
 		{

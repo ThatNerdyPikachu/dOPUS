@@ -29,4 +29,7 @@ void PopulateFiles  (const char* dir,
 int  ScanDir        (const char *dir,
                      std::vector<dirent *>& namelist,
                      int (*compar)(const dirent **, const dirent **));
+
+int  RmDirRecursive (const char* dir);
+
 }

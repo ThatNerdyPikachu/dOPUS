@@ -239,4 +239,37 @@ int Navigate(char* cwd, DirEntry& entry, bool up)
 	return 0; // Return success
 }
 
+int  RmDirRecursive (const char* dir)
+{
+    std::vector<DirEntry> dirEntries;
+    std::vector<std::string>extFilters;
+    PopulateFiles(dir, dirEntries, extFilters);
+    for(int i = 0 ; i < (int)dirEntries.size() ; ++i)
+    {
+        DirEntry& entry = dirEntries[i];
+
+        // Ignore ".." in Root Directory
+        if (strncmp((char*)entry.name, "..", 2) == 0) // Ignore ".."
+            continue;
+
+        std::string entryPath(std::string(dir) + "/" + std::string((char*)entry.name));
+        if(entry.isDir)
+        {
+            LOG("Deleting folder %s...\n", entryPath.c_str());
+            RmDirRecursive(entryPath.c_str());
+        }
+        else
+        {
+            LOG("Deleting file %s...\n", entryPath.c_str());
+            if(remove(entryPath.c_str()) != 0)
+                printf("Error deleting file\n");
+        }
+    }
+    LOG("Deleting folder %s...\n", dir);
+    if(rmdir(dir) != 0)
+        printf("Error deleting folder\n");
+    return 0;
+}
+
+
 }

@@ -8,6 +8,8 @@
 
 using namespace tin::install::nsp;
 
+namespace NXFramework
+{
 
 void DebugPrintInstallData(nx::ncm::ContentMeta& contentMeta, const FsStorageId destStorageId)
 {
@@ -396,3 +398,4 @@ bool InstallNSP(const std::string& filename, const FsStorageId destStorageId, co
     return true;
 }
 
+}
