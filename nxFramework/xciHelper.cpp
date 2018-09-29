@@ -151,7 +151,7 @@ int ConvertXCI(const std::string& filename)
     }
 
     // Copy input file
-    strncpy(input_name, filename.c_str(), sizeof(input_name));
+    strncpy(input_name, filename.c_str(), sizeof(filename.length()));
 
     if (!(tool_ctx.file = fopen(input_name, "rb")))
     {
