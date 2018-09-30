@@ -9,7 +9,7 @@ char* ClockGetCurrentTime(void)
 	static char buffer[10];
 
     time_t unixTime = time(NULL);
-	struct tm* timeStruct = gmtime((const time_t *)&unixTime);
+	struct tm* timeStruct = localtime((const time_t *)&unixTime);
 	int hours   = (timeStruct->tm_hour);
 	int minutes = timeStruct->tm_min;
 

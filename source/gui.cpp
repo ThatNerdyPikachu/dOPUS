@@ -188,7 +188,7 @@ void GUI::StatusBarDisplayTime(void)
 void GUI::Render(const double timer)
 {
     SDL::DrawRect(SDL::Renderer, 0, 0, 1280, 40, STATUS_BAR_LIGHT);	// Status bar
-    SDL::DrawRect(SDL::Renderer, 0, 40, 1280, 100, MENU_BAR_LIGHT);	// Menu bar
+    SDL::DrawRect(SDL::Renderer, 0, 40, 1280, 40, MENU_BAR_LIGHT);	// Directory bar
     StatusBarDisplayTime();
     guiFileBrowser->Render(timer);
 }

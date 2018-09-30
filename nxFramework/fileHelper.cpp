@@ -59,6 +59,14 @@ u64 GetFileSize(const char* filename)
 	return st.st_size;
 }
 
+void GetFileModifiedTime(const char* filename, char* dateString)
+{
+	struct stat attr;
+	stat(filename, &attr);
+	struct tm* timeinfo = localtime (&attr.st_mtime);
+	strftime(dateString,256,"%F %I:%M %p.",timeinfo);
+}
+
 void GetSizeString(char *string, u64 size)
 {
 	double double_size = (double)size;

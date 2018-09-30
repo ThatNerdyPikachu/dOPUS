@@ -34,11 +34,10 @@ void GUIFileBrowser::Shutdown()
 }
 void GUIFileBrowser::Render(const double timer)
 {
+    int topCoord = 90;
 	int title_height = 0;
-	SDL::DrawImage(SDL::Renderer, rootGui->TextureHandle(GUI::Icon_nav_drawer), 20, 58);
-	SDL::DrawImage(SDL::Renderer, rootGui->TextureHandle(GUI::Icon_actions), (1260 - 64), 58);
 	TTF_SizeText(rootGui->FontHandle(GUI::Roboto_large), curDir, NULL, &title_height);
-	SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto_large), 170, 40 + ((100 - title_height)/2), WHITE, curDir);
+	SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto), 12, 18 + ((topCoord - title_height)/2), WHITE, curDir);
 
 	int printed = 0;
 	for(int i = 0 ; i < (int)dirEntries.size() ; ++i)
@@ -49,7 +48,7 @@ void GUIFileBrowser::Render(const double timer)
 		if(i >= cursor.top)
 		{
 			if (i == cursor.current)
-				SDL::DrawRect(SDL::Renderer, 0, 140 + (37 * printed), 1280, 36, SELECTOR_COLOUR_LIGHT);
+				SDL::DrawRect(SDL::Renderer, 0, topCoord + (37 * printed), 1280, 36, SELECTOR_COLOUR_LIGHT);
 
 			char path[512];
 			strcpy(path, curDir);
@@ -59,25 +58,38 @@ void GUIFileBrowser::Render(const double timer)
                                 (dirEntries[i].isDir)?
                                 rootGui->TextureHandle(GUI::Icon_dir):
                                 rootGui->TextureHandle(GUI::Icon_file),
-                                20, 140 + (37 * printed), 36, 36);
+                                20, topCoord + (37 * printed), 36, 36);
 
-			char buf[64];
-			char size[16];
+			// Date // TODO: Date looks wrong, is it a libnx bug?
+            int widthDate = 0;
+#if 0
+            char dateString[256];
+            GetFileModifiedTime(std::string(std::string(curDir) + (char*)dirEntries[i].name).c_str(), dateString);
+			TTF_SizeText(rootGui->FontHandle(GUI::Roboto_small), dateString, &widthDate, NULL);
+			SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto_small), 1260 - widthDate, 145 + (37 * printed), TEXT_MIN_COLOUR_LIGHT, dateString);
+#endif
+			// Folder / File size
+            if (!dirEntries[i].isDir)
+			{
+                int width = 0;
+				char size[16];
+                GetSizeString(size, dirEntries[i].size);
+				TTF_SizeText(rootGui->FontHandle(GUI::Roboto_small), size, &width, NULL);
+				SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto_small), 1260 - width - widthDate, topCoord + (37 * printed), TEXT_MIN_COLOUR_LIGHT, size);
+			}
+			else
+            {
+                int width = 0;
+				TTF_SizeText(rootGui->FontHandle(GUI::Roboto_small), "Folder", &width, NULL);
+				SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto_small), 1260 - width - widthDate, topCoord + 7 + (37 * printed), TEXT_MIN_COLOUR_LIGHT, "Folder");
+            }
+
+   			char buf[64];
 			strncpy(buf, (char*)dirEntries[i].name, sizeof(buf));
 			buf[sizeof(buf) - 1] = '\0';
-
-			if (!dirEntries[i].isDir)
-			{
-				GetSizeString(size, dirEntries[i].size);
-				int width = 0;
-				TTF_SizeText(rootGui->FontHandle(GUI::Roboto_small), size, &width, NULL);
-				SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto_small), 1260 - width, 140 + (37 * printed), TEXT_MIN_COLOUR_LIGHT, size);
-			}
-
 			int height = 0;
 			TTF_SizeText(rootGui->FontHandle(GUI::Roboto), buf, NULL, &height);
-
-			SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto), 65, 140 + ((37 - height)/2) + (37 * printed), BLACK,
+			SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto), 65, topCoord + ((37 - height)/2) + (37 * printed), BLACK,
                  (strncmp((char*)dirEntries[i].name, "..", 2) == 0)?"Parent folder":buf);
 
 			printed++; // Increase printed counter

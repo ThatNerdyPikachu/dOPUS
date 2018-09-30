@@ -17,10 +17,11 @@ struct DirEntry
 	u64  size;          // File size
 };
 
-void        GetFileBasename (char *string, const char *filename);
-void        GetSizeString   (char* string, u64 size);
-u64         GetFileSize     (const char* filename);
-const char* GetFileExt      (const char *filename);
+void        GetFileBasename     (char *string, const char *filename);
+void        GetSizeString       (char* string, u64 size);
+u64         GetFileSize         (const char* filename);
+const char* GetFileExt          (const char *filename);
+void        GetFileModifiedTime (const char* filename, char* dateString);
 
 int  Navigate       (char* cwd, DirEntry& entry, bool parent);
 void PopulateFiles  (const char* dir,
