@@ -15,10 +15,15 @@ public:
     void Render(const double timer) override;
     void Update(const double timer, const u64 kDown) override;
 private:
+    struct Cursor
+    {
+        int current = 0;
+        int top    = 0;
+    };
     const GUI*              rootGui;
     char                    curDir[512];
-    int                     curPosition = 0;
-    int                     topPosition = 0;
+    Cursor                  cursor;
     std::vector<DirEntry>   dirEntries;
     std::vector<std::string>extFilters;
+    std::vector<Cursor>     cursorStack;
 };
