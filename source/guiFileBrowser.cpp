@@ -166,8 +166,7 @@ void GUIFileBrowser::Update(const double timer, const u64 kDown)
                 {
                     std::string NSPPath = curDir + std::string((char*)entry.name);
                     LOG("\nExtracting %s...\n", NSPPath.c_str());
-                    LOG("TODO \n\n...:)\n");
-                    //ExtractNSP(NSPPath);
+                    ExtractNSP(NSPPath);
 
                     // Refresh folder view
                     PopulateFiles(curDir, dirEntries, extFilters);
@@ -177,7 +176,7 @@ void GUIFileBrowser::Update(const double timer, const u64 kDown)
                 else
                 if(strncasecmp(GetFileExt((char*)entry.name), "xci", 3) == 0)
                 {
-                    std::string XCIPath = std::string(curDir + std::string((char*)entry.name));
+                    std::string XCIPath = curDir + std::string((char*)entry.name);
                     LOG("\nExtracting %s...:)\n", XCIPath.c_str());
                     ExtractXCI(XCIPath);
 
@@ -196,7 +195,7 @@ void GUIFileBrowser::Update(const double timer, const u64 kDown)
             {
                 if(strncasecmp(GetFileExt((char*)entry.name), "xci", 3) == 0)
                 {
-                    std::string XCIPath = std::string(curDir + std::string((char*)entry.name));
+                    std::string XCIPath = curDir + std::string((char*)entry.name);
                     LOG("\nConverting %s...\n", XCIPath.c_str());
                     ConvertXCI(XCIPath);
 

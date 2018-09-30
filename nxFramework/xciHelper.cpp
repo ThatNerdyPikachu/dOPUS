@@ -123,7 +123,7 @@ int ExtractXCI(const std::string& filename, const bool saveNSP)
 
     // secure partition save path to "filename" directory
     char outputDir[MAX_PATH];
-    NXFramework::GetFileBasename(outputDir, filename.c_str());
+    GetFileBasename(outputDir, filename.c_str());
     if(saveNSP)
     {
         strcat(outputDir, "Temp");
@@ -140,7 +140,7 @@ int ExtractXCI(const std::string& filename, const bool saveNSP)
 
     // Output NSP filename
     char nspFilename[MAX_PATH];
-    NXFramework::GetFileBasename(nspFilename, filename.c_str());
+    GetFileBasename(nspFilename, filename.c_str());
 
     // Process ncas in cnmts
     printf("===> Processing Application Metadata:\n");

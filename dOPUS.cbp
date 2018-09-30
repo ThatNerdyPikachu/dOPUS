@@ -52,7 +52,6 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
-		<Unit filename="Makefile" />
 		<Unit filename="_debug/ConvertUTF.d" />
 		<Unit filename="_debug/SDLHelper.d" />
 		<Unit filename="_debug/SDLRender.d" />
@@ -82,31 +81,45 @@
 		<Unit filename="_debug/pki.d" />
 		<Unit filename="_debug/rsa.d" />
 		<Unit filename="_debug/sha.d" />
-		<Unit filename="_debug/simpleFilesystem.d" />
 		<Unit filename="_debug/simple_filesystem.d" />
 		<Unit filename="_debug/title_util.d" />
 		<Unit filename="_debug/utils.d" />
 		<Unit filename="_debug/xci.d" />
 		<Unit filename="_debug/xciHelper.d" />
+		<Unit filename="_release/ConvertUTF.d" />
 		<Unit filename="_release/SDLHelper.d" />
 		<Unit filename="_release/SDLRender.d" />
+		<Unit filename="_release/aes.d" />
 		<Unit filename="_release/app.d" />
 		<Unit filename="_release/appInstaller.d" />
 		<Unit filename="_release/byte_buffer.d" />
+		<Unit filename="_release/cnmt.d" />
 		<Unit filename="_release/common.d" />
 		<Unit filename="_release/content_meta.d" />
+		<Unit filename="_release/dummy.d" />
 		<Unit filename="_release/es.d" />
+		<Unit filename="_release/extkeys.d" />
 		<Unit filename="_release/fileHelper.d" />
+		<Unit filename="_release/filepath.d" />
 		<Unit filename="_release/fs.d" />
 		<Unit filename="_release/gui.d" />
 		<Unit filename="_release/guiFileBrowser.d" />
+		<Unit filename="_release/hfs0.d" />
+		<Unit filename="_release/nca.d" />
 		<Unit filename="_release/ncm.d" />
 		<Unit filename="_release/ncm_ext.d" />
 		<Unit filename="_release/ns_ext.d" />
-		<Unit filename="_release/simpleFilesystem.d" />
+		<Unit filename="_release/nsp.d" />
+		<Unit filename="_release/nspHelper.d" />
+		<Unit filename="_release/nxUtils.d" />
+		<Unit filename="_release/pki.d" />
+		<Unit filename="_release/rsa.d" />
+		<Unit filename="_release/sha.d" />
 		<Unit filename="_release/simple_filesystem.d" />
 		<Unit filename="_release/title_util.d" />
 		<Unit filename="_release/utils.d" />
+		<Unit filename="_release/xci.d" />
+		<Unit filename="_release/xciHelper.d" />
 		<Unit filename="externals/4NXCI/ConvertUTF.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -749,31 +762,6 @@
 		<Unit filename="source/gui.h" />
 		<Unit filename="source/guiFileBrowser.cpp" />
 		<Unit filename="source/guiFileBrowser.h" />
-		<Unit filename="tinfoil/install/simple_filesystem.cpp" />
-		<Unit filename="tinfoil/install/simple_filesystem.hpp" />
-		<Unit filename="tinfoil/nx/content_meta.cpp" />
-		<Unit filename="tinfoil/nx/content_meta.hpp" />
-		<Unit filename="tinfoil/nx/fs.cpp" />
-		<Unit filename="tinfoil/nx/fs.hpp" />
-		<Unit filename="tinfoil/nx/ipc/es.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="tinfoil/nx/ipc/es.h" />
-		<Unit filename="tinfoil/nx/ipc/ncm_ext.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="tinfoil/nx/ipc/ncm_ext.h" />
-		<Unit filename="tinfoil/nx/ipc/ns_ext.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="tinfoil/nx/ipc/ns_ext.h" />
-		<Unit filename="tinfoil/nx/ipc/tin_ipc.h" />
-		<Unit filename="tinfoil/nx/ncm.cpp" />
-		<Unit filename="tinfoil/nx/ncm.hpp" />
-		<Unit filename="tinfoil/util/byte_buffer.cpp" />
-		<Unit filename="tinfoil/util/byte_buffer.hpp" />
-		<Unit filename="tinfoil/util/title_util.cpp" />
-		<Unit filename="tinfoil/util/title_util.hpp" />
 		<Extensions>
 			<code_completion />
 			<envvars />
