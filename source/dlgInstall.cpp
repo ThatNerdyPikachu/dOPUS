@@ -130,10 +130,19 @@ void DLGInstall::Update(const double timer, const u64 kDown)
             if(dlgMode == DLG_CONVERT)
             {
                 // we need twice the XCI size: 1x for temp files, 1x for NSP
-                if(GetFreeSpace(destStorageId) < 2 * GetFileSize((filedir + filename).c_str()))
+                std::string filePath = filedir + filename;
+                u64 freeSpace        = GetFreeSpace(destStorageId);
+                u64 neededSpace      = 2 * GetFileSize(filePath.c_str());
+                if(freeSpace < neededSpace)
                 {
                     // TODO
                     // No!
+                    char freeStr[256];
+                    char neededStr[256];
+                    GetSizeString(freeStr, freeSpace);
+                    GetSizeString(neededStr, neededSpace);
+
+                    LOG("Not enough space to convert %s... %s free %s needed\n", filePath.c_str(), freeStr, neededStr);
                 }
             }
             else
@@ -157,6 +166,9 @@ void DLGInstall::Update(const double timer, const u64 kDown)
                     // TODO
                     // No!
                 }
+            }
+            else
+            {
             }
 
             if(dlgMode == DLG_INSTALL || dlgMode == DLG_INSTALL_DELETE)
