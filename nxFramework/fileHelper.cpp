@@ -279,10 +279,31 @@ int  RmDirRecursive (const char* dir)
     return 0;
 }
 
-bool FileExist(const std::string& filename)
+u64 GetDirSizeRecursive (const char* dir)
+{
+    // TODO
+    return 0;
+}
+
+bool FileExist(const char* filename)
 {
   struct stat buffer;
-  return (stat(filename.c_str(), &buffer) == 0);
+  return (stat(filename, &buffer) == 0);
+}
+
+u64 GetFreeSpace(FsStorageId storage_id)
+{
+    u64 freeSpace;
+    nsGetFreeSpaceSize(storage_id, &freeSpace);
+    return freeSpace;
+}
+
+u64 GetTotalSpace(FsStorageId storage_id)
+{
+    u64 freeSpace;
+    nsGetTotalSpaceSize(storage_id, &freeSpace);
+    return freeSpace;
+
 }
 
 }

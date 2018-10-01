@@ -111,21 +111,67 @@ void DLGInstall::Update(const double timer, const u64 kDown)
 {
     if(dlgState == DLG_CONFIRMATION)
     {
+        // SDCard or Nand selection
+        if( dlgMode == DLG_INSTALL              ||
+            dlgMode == DLG_INSTALL_DELETE       ||
+            dlgMode == DLG_INSTALL_EXTRACTED)
+        {
+            if (kDown & KEY_DLEFT)
+                destStorageId = FsStorageId_SdCard;
+            else
+            if (kDown & KEY_DRIGHT)
+                destStorageId = FsStorageId_NandUser;
+        }
+
+        // Thread kick off
         if (kDown & KEY_A)
         {
+            // Check free space
+            if(dlgMode == DLG_CONVERT)
+            {
+                // we need twice the XCI size: 1x for temp files, 1x for NSP
+                if(GetFreeSpace(destStorageId) < 2 * GetFileSize((filedir + filename).c_str()))
+                {
+                    // TODO
+                    // No!
+                }
+            }
+            else
+            if(dlgMode == DLG_INSTALL           ||
+               dlgMode == DLG_INSTALL_DELETE    ||
+               dlgMode == DLG_EXTRACT)
+            {
+                // we need the file size
+                if(GetFreeSpace(destStorageId) < GetFileSize((filedir + filename).c_str()))
+                {
+                    // TODO
+                    // No!
+                }
+            }
+            else
+            if(dlgMode == DLG_INSTALL_EXTRACTED)
+            {
+                // we need the dir size
+                if(GetFreeSpace(destStorageId) < GetDirSizeRecursive((filedir + filename).c_str()))
+                {
+                    // TODO
+                    // No!
+                }
+            }
+
             if(dlgMode == DLG_INSTALL || dlgMode == DLG_INSTALL_DELETE)
             {
                 // Make sure there is no processThread in flight
                 processThreadArgs.filedir                = filedir;
                 processThreadArgs.filename               = filename;
-                processThreadArgs.destStorageId          = FsStorageId_SdCard;
+                processThreadArgs.destStorageId          = destStorageId;
                 processThreadArgs.ignoreReqFirmVersion   = true;
                 processThreadArgs.progress               = &progress;
                 processThreadArgs.running                = &threadRunning;
                 processThreadArgs.deleteSourceFile       = (dlgMode == DLG_INSTALL_DELETE);
                 threadRunning                            = true;
                 std::string filePath = filedir + filename;
-                LOG("Installing %s...\n", filePath.c_str());
+                LOG("Installing %s to %s...\n", filePath.c_str(), destStorageId==FsStorageId_SdCard?"SD Card":"Nand");
                 thrd_create(&processThread, InstallThread, &processThreadArgs);
                 dlgState = DLG_PROGRESS;
             }
@@ -135,14 +181,14 @@ void DLGInstall::Update(const double timer, const u64 kDown)
                 // Make sure there is no processThread in flight
                 processThreadArgs.filedir                = filedir;
                 processThreadArgs.filename               = filename;
-                processThreadArgs.destStorageId          = FsStorageId_SdCard;
+                processThreadArgs.destStorageId          = destStorageId;
                 processThreadArgs.ignoreReqFirmVersion   = true;
                 processThreadArgs.deleteSourceFile       = false;
                 processThreadArgs.progress               = &progress;
                 processThreadArgs.running                = &threadRunning;
                 threadRunning                            = true;
                 std::string filePath = filedir + filename;
-                LOG("Installing folder %s...\n", filePath.c_str());
+                LOG("Installing folder %s to %s...\n", filePath.c_str(), destStorageId==FsStorageId_SdCard?"SD Card":"Nand");
                 thrd_create(&processThread, InstallExtractedThread, &processThreadArgs);
                 dlgState = DLG_PROGRESS;
             }
@@ -198,8 +244,6 @@ void DLGInstall::Update(const double timer, const u64 kDown)
 
 void DLGInstall::Render(const double timer)
 {
-    SDL::DrawImageScale(SDL::Renderer, rootGui->TextureHandle(GUI::Properties_dialog_dark), 190, 247, 900, 225);
-
     std::string message;
   	switch(dlgState)
 	{
@@ -207,8 +251,13 @@ void DLGInstall::Render(const double timer)
             if(dlgMode == DLG_EXTRACT)
                 message = "Extracting...";
             else
-            if(dlgMode == DLG_INSTALL || dlgMode == DLG_INSTALL_EXTRACTED)
-                message = "Installing...";
+            if(dlgMode == DLG_INSTALL           ||
+               dlgMode == DLG_INSTALL_EXTRACTED ||
+               dlgMode == DLG_INSTALL_DELETE)
+                message = std::string("Installing to ") +
+                    (destStorageId==FsStorageId_SdCard?
+                     std::string("SD Card"):std::string("Nand")) +
+                     std::string("...");
             else
                 message = "Converting...";
         break;
@@ -228,6 +277,9 @@ void DLGInstall::Render(const double timer)
             else
                 message = "Convert";
 	}
+    // Main frame
+    SDL::DrawImageScale(SDL::Renderer, rootGui->TextureHandle(GUI::Properties_dialog_dark),
+                        190, 247, 900, 225);
 
     // Message
     int message_height = 0;
@@ -239,18 +291,39 @@ void DLGInstall::Render(const double timer)
     SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto_small),
                   205, 255 + message_height, TITLE_COL, filename.c_str(), 600);
 
+    // Cancel
     int options_cancel_width  = 0;
     int options_cancel_height = 0;
-    TTF_SizeText(rootGui->FontHandle(GUI::Roboto), "CANCEL", &options_cancel_width, &options_cancel_height);
+    TTF_SizeText(rootGui->FontHandle(GUI::Roboto), "(B) Cancel", &options_cancel_width, &options_cancel_height);
     SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto),
                   1070 - options_cancel_width,
                   467  - options_cancel_height, dlgState == DLG_PROGRESS?DARK_GREY:TITLE_COL, "CANCEL");
 
+    // OK
     int options_ok_width  = 0;
-    TTF_SizeText(rootGui->FontHandle(GUI::Roboto), "OK", &options_ok_width, NULL);
+    TTF_SizeText(rootGui->FontHandle(GUI::Roboto), "(A) OK", &options_ok_width, NULL);
     SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto),
                   1070 - 50 - options_cancel_width - options_ok_width,
-                  467       - options_cancel_height, dlgState == DLG_PROGRESS?DARK_GREY:TITLE_COL, "OK");
+                  467       - options_cancel_height, dlgState != DLG_CONFIRMATION?DARK_GREY:TITLE_COL, "OK");
+
+    // SDCard or Nand
+    if(dlgState == DLG_CONFIRMATION)
+    {
+        if(dlgMode == DLG_INSTALL           ||
+           dlgMode == DLG_INSTALL_DELETE    ||
+           dlgMode == DLG_INSTALL_EXTRACTED)
+        {
+            int txt_height = 0;
+            TTF_SizeText(rootGui->FontHandle(GUI::Roboto), "SD Card", NULL, &txt_height);
+            SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto),
+                          190+200    , 375-txt_height,
+                          (destStorageId == FsStorageId_SdCard)  ?TITLE_COL:DARK_GREY, "SD Card");
+
+            SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto),
+                          190+900-200, 375-txt_height,
+                          (destStorageId == FsStorageId_NandUser)?TITLE_COL:DARK_GREY, "Nand");
+        }
+    }
 
     if(dlgState == DLG_PROGRESS)
     {

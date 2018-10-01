@@ -20,6 +20,7 @@ struct DirEntry
 void        GetFileBasename     (char *string, const char *filename);
 void        GetSizeString       (char* string, u64 size);
 u64         GetFileSize         (const char* filename);
+u64         GetDirSizeRecursive (const char* dir);
 const char* GetFileExt          (const char *filename);
 void        GetFileModifiedTime (const char* filename, char* dateString);
 
@@ -32,6 +33,8 @@ int  ScanDir        (const char *dir,
                      int (*compar)(const dirent **, const dirent **));
 
 int  RmDirRecursive (const char* dir);
-bool FileExist(const std::string& filename);
+bool FileExist(const char* filename);
+u64 GetFreeSpace(FsStorageId storage_id);
+u64 GetTotalSpace(FsStorageId storage_id);
 
 }
