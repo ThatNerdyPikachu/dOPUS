@@ -20,6 +20,7 @@ public:
     enum DlgMode
     {
         DLG_INSTALL,
+        DLG_INSTALL_DELETE,
         DLG_INSTALL_EXTRACTED,
         DLG_EXTRACT,
         DLG_CONVERT,

@@ -102,61 +102,84 @@ void GUIFileBrowser::Render(const double timer)
     const char* fileExt = GetFileExt((char*)entry.name);
     if(entry.isDir)
     {
-        std::string keyA = "(A) Explore";
         std::string keyB = "(B) Go up";
+        std::string keyA = "(A) Explore";
         std::string keyX = "(X) Install extracted NSP/XCI";
-
-        int widthKeyA  = 0;
-        int heightKeyA = 0;
-        TTF_SizeText(rootGui->FontHandle(GUI::Roboto_small), keyA.c_str(), &widthKeyA, &heightKeyA);
-        SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto),
-                      12, (708 - heightKeyA), WHITE, keyA.c_str());
 
         int widthKeyB  = 0;
         int heightKeyB = 0;
         TTF_SizeText(rootGui->FontHandle(GUI::Roboto_small), keyB.c_str(), &widthKeyB, &heightKeyB);
         SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto),
-                      12 + widthKeyA + 45, (708 - heightKeyB), (strcmp(curDir, ROOT_PATH) != 0)?WHITE:DARK_GREY, keyB.c_str());
+                      12,
+                      708 - heightKeyB,
+                      (strcmp(curDir, ROOT_PATH) != 0)?WHITE:DARK_GREY, keyB.c_str());
+
+        int widthKeyA  = 0;
+        int heightKeyA = 0;
+        TTF_SizeText(rootGui->FontHandle(GUI::Roboto_small), keyA.c_str(), &widthKeyA, &heightKeyA);
+        SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto),
+                      12 + 45 * 1 + widthKeyB,
+                      708 - heightKeyA,
+                      WHITE, keyA.c_str());
 
         int widthKeyX  = 0;
         int heightKeyX = 0;
         TTF_SizeText(rootGui->FontHandle(GUI::Roboto_small), keyX.c_str(), &widthKeyX, &heightKeyX);
         SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto),
-                      12 + widthKeyA + widthKeyB + 90, (708 - heightKeyX), WHITE, keyX.c_str());
+                      12 + 45 * 2 + widthKeyA + widthKeyB,
+                      708 - heightKeyX,
+                      WHITE, keyX.c_str());
     }
     else
     if((strncasecmp(fileExt, "nsp", 3) == 0) || (strncasecmp(fileExt, "xci", 3) == 0))
     {
-        std::string keyA = "(A) Install";
-        std::string keyB = "(B) Go up";
-        std::string keyX = "(X) Extract";
-        std::string keyY = "(Y) Convert to NSP";
-
-        int widthKeyA  = 0;
-        int heightKeyA = 0;
-        TTF_SizeText(rootGui->FontHandle(GUI::Roboto_small), keyA.c_str(), &widthKeyA, &heightKeyA);
-        SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto),
-                      12, (708 - heightKeyA), WHITE, keyA.c_str());
+        std::string keyB        = "(B) Go up";
+        std::string keyA        = "(A) Install";
+        std::string keyX        = "(X) Install & Delete";
+        std::string keyY        = "(Y) Extract";
+        std::string keyMinus    = "(-) Convert to NSP";
 
         int widthKeyB  = 0;
         int heightKeyB = 0;
         TTF_SizeText(rootGui->FontHandle(GUI::Roboto_small), keyB.c_str(), &widthKeyB, &heightKeyB);
         SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto),
-                      12 + widthKeyA + 45, (708 - heightKeyB), (strcmp(curDir, ROOT_PATH) != 0)?WHITE:DARK_GREY, keyB.c_str());
+                      12,
+                      708 - heightKeyB,
+                      (strcmp(curDir, ROOT_PATH) != 0)?WHITE:DARK_GREY, keyB.c_str());
+
+        int widthKeyA  = 0;
+        int heightKeyA = 0;
+        TTF_SizeText(rootGui->FontHandle(GUI::Roboto_small), keyA.c_str(), &widthKeyA, &heightKeyA);
+        SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto),
+                      12 + 45 * 1 + widthKeyB,
+                      708 - heightKeyA,
+                      WHITE, keyA.c_str());
 
         int widthKeyX  = 0;
         int heightKeyX = 0;
         TTF_SizeText(rootGui->FontHandle(GUI::Roboto_small), keyX.c_str(), &widthKeyX, &heightKeyX);
         SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto),
-                      12 + widthKeyA + widthKeyB + 90, (708 - heightKeyX), WHITE, keyX.c_str());
+                      12 + 45 * 2 + widthKeyA + widthKeyB,
+                      708 - heightKeyX,
+                      WHITE, keyX.c_str());
+
+        int widthKeyY  = 0;
+        int heightKeyY = 0;
+        TTF_SizeText(rootGui->FontHandle(GUI::Roboto_small), keyY.c_str(), &widthKeyY, &heightKeyY);
+        SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto),
+                      12 + 45 * 3 + widthKeyA + widthKeyB + widthKeyX,
+                      708 - heightKeyY,
+                      WHITE, keyY.c_str());
 
         if(strncasecmp(fileExt, "xci", 3) == 0)
         {
-            int widthKeyY  = 0;
-            int heightKeyY = 0;
-            TTF_SizeText(rootGui->FontHandle(GUI::Roboto_small), keyY.c_str(), &widthKeyY, &heightKeyY);
+            int widthKeyMinus  = 0;
+            int heightKeyMinus = 0;
+            TTF_SizeText(rootGui->FontHandle(GUI::Roboto_small), keyMinus.c_str(), &widthKeyMinus, &heightKeyMinus);
             SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto),
-                          12 + widthKeyA + widthKeyB + widthKeyX + 135, (708 - heightKeyY), WHITE, keyY.c_str());
+                          12 + 45 * 4 + widthKeyA + widthKeyB + widthKeyX + widthKeyY,
+                          708 - heightKeyMinus,
+                          WHITE, keyMinus.c_str());
         }
     }
     {
@@ -246,6 +269,7 @@ void GUIFileBrowser::Update(const double timer, const u64 kDown)
 		{
 		    if(entry.isDir)
             {
+                // Explore
                 Navigate(curDir, dirEntries[cursor.current], false);
                 PopulateFiles(curDir, dirEntries, extFilters);
 
@@ -280,6 +304,22 @@ void GUIFileBrowser::Update(const double timer, const u64 kDown)
             }
             else
             {
+                // Install & Delete NCP or XCI
+                if( (strncasecmp(fileExt, "xci", 3) == 0) ||
+                    (strncasecmp(fileExt, "nsp", 3) == 0))
+                {
+                    dlgInstall.SetMode(DLGInstall::DLG_INSTALL_DELETE);
+                    dlgInstall.SetState(DLGInstall::DLG_CONFIRMATION);
+                    dlgInstall.SetFilename(std::string(curDir), std::string((char*)entry.name));
+                    dlgInstall.SetEnabled(true);
+                }
+            }
+        }
+		else
+        if (kDown & KEY_Y)
+        {
+		    if(!entry.isDir)
+            {
                 // Extract NSP or XCI
                 if( (strncasecmp(fileExt, "xci", 3) == 0) ||
                     (strncasecmp(fileExt, "nsp", 3) == 0))
@@ -291,10 +331,10 @@ void GUIFileBrowser::Update(const double timer, const u64 kDown)
                 }
             }
         }
-		else
-        if (kDown & KEY_Y)
+        else
+        if(kDown & KEY_MINUS)
         {
-		    if(!entry.isDir)
+            if(!entry.isDir)
             {
                 // Convert XCI to NSP
                 if(strncasecmp(fileExt, "xci", 3) == 0)

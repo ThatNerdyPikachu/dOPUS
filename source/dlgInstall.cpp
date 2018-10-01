@@ -48,6 +48,9 @@ void DLGInstall::Render(const double timer)
             if(dlgMode == DLG_INSTALL || dlgMode == DLG_INSTALL_EXTRACTED)
                 message = "Install";
             else
+            if(dlgMode == DLG_INSTALL_DELETE)
+                message = "Install and Delete";
+            else
                 message = "Convert";
 	}
 
@@ -175,7 +178,7 @@ void DLGInstall::Update(const double timer, const u64 kDown)
     {
         if (kDown & KEY_A)
         {
-            if(dlgMode == DLG_INSTALL)
+            if(dlgMode == DLG_INSTALL || dlgMode == DLG_INSTALL_DELETE)
             {
                 // Make sure there is no processThread in flight
                 processThreadArgs.filedir                = filedir;
@@ -249,6 +252,14 @@ void DLGInstall::Update(const double timer, const u64 kDown)
         {
             thrd_join(processThread, NULL);
             dlgState = DLG_DONE;
+            if(dlgMode == DLG_INSTALL_DELETE)
+            {
+                std::string filePath = filedir + filename;
+                LOG("Deleting file %s...\n", filePath.c_str());
+                if(remove(filePath.c_str()) != 0)
+                    printf("Error deleting file\n");
+                dlgMode = DLG_INSTALL;
+            }
         }
     }
 }
