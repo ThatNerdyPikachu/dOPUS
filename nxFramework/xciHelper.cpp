@@ -199,10 +199,19 @@ int ConvertXCI(const std::string& filename, float* progress)
     return ExtractXCI(filename, true, progress);
 }
 
-int InstallXCI(const std::string& filename, const FsStorageId destStorageId, const bool ignoreReqFirmVersion, float* progress)
+int InstallXCI(const std::string& filename, const FsStorageId destStorageId, const bool ignoreReqFirmVersion, const bool deleteXCI, float* progress)
 {
     // Extract
     ExtractXCI(filename, false, progress);
+
+    // Delete source file if wanted, to avoid using 3 times the space necessary:
+    // XCI + Extracted NCAs + Installed
+    if(deleteXCI)
+    {
+        LOG("Deleting file %s...\n", filename.c_str());
+        if(remove(filename.c_str()) != 0)
+            printf("Error deleting file\n");
+    }
 
     // Install
     char outputDir[MAX_PATH];

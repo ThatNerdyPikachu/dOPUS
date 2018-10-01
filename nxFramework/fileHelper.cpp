@@ -279,5 +279,10 @@ int  RmDirRecursive (const char* dir)
     return 0;
 }
 
+bool FileExist(const std::string& filename)
+{
+  struct stat buffer;
+  return (stat(filename.c_str(), &buffer) == 0);
+}
 
 }

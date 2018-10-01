@@ -32,5 +32,6 @@ int  ScanDir        (const char *dir,
                      int (*compar)(const dirent **, const dirent **));
 
 int  RmDirRecursive (const char* dir);
+bool FileExist(const std::string& filename);
 
 }
