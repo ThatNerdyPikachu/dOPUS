@@ -4,19 +4,21 @@
 
 using namespace NXFramework;
 
+class GUI;
 class GUIComponent
 {
 public:
-    GUIComponent() {}
+    GUIComponent(const GUI* gui): rootGui(gui) { assert(gui != nullptr); }
     virtual ~GUIComponent() {}
     virtual void Initialize() = 0;
     virtual void Shutdown() = 0;
     virtual void Render(const double timer) = 0;
     virtual void Update(const double timer, const u64 kDown) = 0;
-    virtual bool IsVisible()                 { return isVisible; }
-    virtual void SetVisibile(bool visible)   { isVisible = visible; }
+    virtual bool IsEnabled()                 { return isEnabled; }
+    virtual void SetEnabled(bool enabled)    { isEnabled = enabled; }
 protected:
-    bool isVisible = false;
+    bool isEnabled = true;
+    const GUI* rootGui;
 };
 
 class GUIFileBrowser;
@@ -126,6 +128,6 @@ private:
     SDL_Texture* textures[Texture::Tex_count];
     TTF_Font*    fonts[Font::Font_count];
 
-    // Components // TODO: array of GUIComponents
+    // Components
     GUIFileBrowser* guiFileBrowser;
 };

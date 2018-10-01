@@ -33,7 +33,7 @@ void memdump(FILE *f, const char *prefix, const void *data, size_t size);
 
 uint64_t _fsize(const char *filename);
 
-void save_file_section(FILE *f_in, uint64_t ofs, uint64_t total_size, struct filepath *filepath);
+void save_file_section(FILE *f_in, uint64_t ofs, uint64_t total_size, struct filepath *filepath, float* progress);
 
 void save_buffer_to_file(void *buf, uint64_t size, struct filepath *filepath);
 void save_buffer_to_directory_file(void *buf, uint64_t size, struct filepath *dirpath, const char *filename);

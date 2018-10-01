@@ -25,7 +25,7 @@ const unsigned char xci_header_pubk[0x100] = {
     0x9A, 0xC1, 0xDD, 0x62, 0x86, 0x9C, 0x2E, 0xE1, 0x2D, 0x6F, 0x62, 0x67, 0x51, 0x08, 0x0E, 0xCF
 };
 
-void xci_process(xci_ctx_t *ctx) {
+void xci_process(xci_ctx_t *ctx, float* progress) {
     fseeko64(ctx->file, 0, SEEK_SET);
     if (fread(&ctx->header, 1, 0x200, ctx->file) != 0x200) {
         fprintf(stderr, "Failed to read XCI header!\n");
@@ -50,8 +50,8 @@ void xci_process(xci_ctx_t *ctx) {
     ctx->partition_ctx.offset = ctx->header.hfs0_offset;
     ctx->partition_ctx.tool_ctx = &blank_ctx;
     ctx->partition_ctx.name = "rootpt";
-    hfs0_process(&ctx->partition_ctx);
-    
+    hfs0_process(&ctx->partition_ctx, progress);
+
     if (ctx->partition_ctx.header->num_files > 4) {
         fprintf(stderr, "Error: Invalid XCI partition!\n");
         exit(EXIT_FAILURE);    
@@ -81,22 +81,22 @@ void xci_process(xci_ctx_t *ctx) {
         cur_ctx->offset = ctx->partition_ctx.offset + hfs0_get_header_size(ctx->partition_ctx.header) + cur_file->offset;
         cur_ctx->tool_ctx = ctx->tool_ctx;
         cur_ctx->file = ctx->file;
-        hfs0_process(cur_ctx);
+        hfs0_process(cur_ctx, progress);
     }
     
     for (unsigned int i = 0; i < 0x10; i++) {
         ctx->iv[i] = ctx->header.reversed_iv[0xF-i];
     }
-    xci_save(ctx);
+    xci_save(ctx, progress);
 
 }
 
-void xci_save(xci_ctx_t *ctx) {
+void xci_save(xci_ctx_t *ctx, float* progress) {
     /* Save Secure Partition. */
 	printf("Saving Secure Partition...\n");
 	os_makedir(ctx->tool_ctx->settings.secure_dir_path.os_path);
 	for (uint32_t i = 0; i < ctx->secure_ctx.header->num_files; i++) {
-		hfs0_save_file(&ctx->secure_ctx, i, &ctx->tool_ctx->settings.secure_dir_path);
+		hfs0_save_file(&ctx->secure_ctx, i, &ctx->tool_ctx->settings.secure_dir_path, progress);
 	}
 	printf("\n");
 }

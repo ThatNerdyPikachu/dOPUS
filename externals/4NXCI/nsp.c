@@ -6,7 +6,7 @@
 #include "pfs0.h"
 #include "utils.h"
 
-void nsp_create(nsp_ctx_t *nsp_ctx)
+void nsp_create(nsp_ctx_t *nsp_ctx, float* progress)
 {
     // nsp file name is tid.nsp
     printf("Creating nsp %s\n", nsp_ctx->filepath.char_path);
@@ -72,7 +72,7 @@ void nsp_create(nsp_ctx_t *nsp_ctx)
             fprintf(stderr, "unable to open %s: %s\n", nsp_ctx->nsp_entry[i2].filepath.char_path, strerror(errno));
             exit(EXIT_FAILURE);
         }
-        uint64_t read_size = 0x61A8000; // 100 MB buffer.
+        uint64_t read_size = 0x400000; // 4 MB buffer.
         unsigned char *buf = malloc(read_size);
         if (buf == NULL)
         {
@@ -80,9 +80,16 @@ void nsp_create(nsp_ctx_t *nsp_ctx)
             exit(EXIT_FAILURE);
         }
 
+        float debugProgress = 0;
         uint64_t ofs = 0;
         while (ofs < nsp_ctx->nsp_entry[i2].filesize)
         {
+            debugProgress = (float)ofs / (float)nsp_ctx->nsp_entry[i2].filesize;
+            if(progress != NULL) *progress = debugProgress;
+
+            if (ofs % (0x400000 * 3) == 0)
+                printf("> Saving Progress: %lu/%lu MB (%d%s)\n", (ofs / 1000000), (nsp_ctx->nsp_entry[i2].filesize / 1000000), (int)(debugProgress * 100.0), "%");
+
             if (ofs + read_size >= nsp_ctx->nsp_entry[i2].filesize)
                 read_size = nsp_ctx->nsp_entry[i2].filesize - ofs;
             if (fread(buf, 1, read_size, nsp_data_file) != read_size)

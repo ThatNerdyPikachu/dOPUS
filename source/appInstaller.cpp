@@ -25,7 +25,7 @@ void AppInstaller::Update(const double timer, const u64 kDown)
 
 void AppInstaller::Render(const double timer)
 {
-    SDL::ClearScreen(SDL::Renderer, WHITE);
+    SDL::ClearScreen(SDL::Renderer, BACKGROUND_COL);
     gui.Render(timer);
 }
 

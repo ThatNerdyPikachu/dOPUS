@@ -62,6 +62,7 @@
 		<Unit filename="_debug/cnmt.d" />
 		<Unit filename="_debug/common.d" />
 		<Unit filename="_debug/content_meta.d" />
+		<Unit filename="_debug/dlgInstall.d" />
 		<Unit filename="_debug/dummy.d" />
 		<Unit filename="_debug/es.d" />
 		<Unit filename="_debug/extkeys.d" />
@@ -82,6 +83,7 @@
 		<Unit filename="_debug/rsa.d" />
 		<Unit filename="_debug/sha.d" />
 		<Unit filename="_debug/simple_filesystem.d" />
+		<Unit filename="_debug/thread.d" />
 		<Unit filename="_debug/title_util.d" />
 		<Unit filename="_debug/utils.d" />
 		<Unit filename="_debug/xci.d" />
@@ -758,6 +760,8 @@
 		<Unit filename="nxFramework/xciHelper.h" />
 		<Unit filename="source/appInstaller.cpp" />
 		<Unit filename="source/appInstaller.h" />
+		<Unit filename="source/dlgInstall.cpp" />
+		<Unit filename="source/dlgInstall.h" />
 		<Unit filename="source/gui.cpp" />
 		<Unit filename="source/gui.h" />
 		<Unit filename="source/guiFileBrowser.cpp" />

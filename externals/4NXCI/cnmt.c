@@ -57,7 +57,7 @@ void cnmt_create_xml(cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_ctx_t *cnmt_ctx, nsp_ctx
     fclose(file);
 }
 
-void cnmt_gamecard_process(nxci_ctx_t *tool, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_ctx_t *cnmt_ctx, nsp_ctx_t *nsp_ctx, bool nspCreate, const char* outputFilename)
+void cnmt_gamecard_process(nxci_ctx_t *tool, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_ctx_t *cnmt_ctx, nsp_ctx_t *nsp_ctx, bool nspCreate, const char* outputFilename, float* progress)
 {
     cnmt_ctx->has_rightsid = 0;
 
@@ -112,7 +112,7 @@ void cnmt_gamecard_process(nxci_ctx_t *tool, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_
             fprintf(stderr, "unable to open %s: %s\n", filepath.char_path, strerror(errno));
 			exit(EXIT_FAILURE);
         }
-        nca_gamecard_process(&nca_ctx, &filepath, index, cnmt_xml_ctx, cnmt_ctx, nsp_ctx);
+        nca_gamecard_process(&nca_ctx, &filepath, index, cnmt_xml_ctx, cnmt_ctx, nsp_ctx, progress);
         nca_free_section_contexts(&nca_ctx);
 		fclose(nca_ctx.file);
     }
@@ -125,7 +125,7 @@ void cnmt_gamecard_process(nxci_ctx_t *tool, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_
         fprintf(stderr, "unable to open %s: %s\n", cnmt_ctx->meta_filepath.char_path, strerror(errno));
 		exit(EXIT_FAILURE);
     }
-    nca_gamecard_process(&nca_ctx, &cnmt_ctx->meta_filepath, cnmt_ctx->nca_count, cnmt_xml_ctx, cnmt_ctx, nsp_ctx);
+    nca_gamecard_process(&nca_ctx, &cnmt_ctx->meta_filepath, cnmt_ctx->nca_count, cnmt_xml_ctx, cnmt_ctx, nsp_ctx, progress);
     nca_free_section_contexts(&nca_ctx);
 	fclose(nca_ctx.file);
 
@@ -159,10 +159,10 @@ void cnmt_gamecard_process(nxci_ctx_t *tool, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_
     }
     printf("\n");
     if(nspCreate)
-        nsp_create(nsp_ctx);
+        nsp_create(nsp_ctx, progress);
 }
 
-void cnmt_download_process(nxci_ctx_t *tool, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_ctx_t *cnmt_ctx, nsp_ctx_t *nsp_ctx, bool nspCreate, const char* outputFilename)
+void cnmt_download_process(nxci_ctx_t *tool, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_ctx_t *cnmt_ctx, nsp_ctx_t *nsp_ctx, bool nspCreate, const char* outputFilename, float* progress)
 {
     cnmt_ctx->has_rightsid = 0;
 
@@ -274,7 +274,7 @@ void cnmt_download_process(nxci_ctx_t *tool, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_
     }
     printf("\n");
     if(nspCreate)
-        nsp_create(nsp_ctx);
+        nsp_create(nsp_ctx, progress);
 }
 
 char *cnmt_get_title_type(cnmt_ctx_t *cnmt_ctx)

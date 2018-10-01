@@ -66,7 +66,7 @@ void RenameNCAs(const xci_ctx_t& xci_ctx)
             RenameNCAs(xci_ctx, addon_nsps[i]);
 }
 
-int ExtractXCI(const std::string& filename, const bool saveNSP)
+int ExtractXCI(const std::string& filename, const bool saveNSP, float* progress)
 {
     nxci_ctx_t tool_ctx;
     char input_name[0x200];
@@ -136,7 +136,7 @@ int ExtractXCI(const std::string& filename, const bool saveNSP)
 
     printf("\n");
 
-    xci_process(&xci_ctx);
+    xci_process(&xci_ctx, progress);
 
     // Output NSP filename
     char nspFilename[MAX_PATH];
@@ -144,12 +144,12 @@ int ExtractXCI(const std::string& filename, const bool saveNSP)
 
     // Process ncas in cnmts
     printf("===> Processing Application Metadata:\n");
-    cnmt_gamecard_process(xci_ctx.tool_ctx, &application_cnmt_xml, &application_cnmt, &application_nsp, saveNSP, nspFilename);
+    cnmt_gamecard_process(xci_ctx.tool_ctx, &application_cnmt_xml, &application_cnmt, &application_nsp, saveNSP, nspFilename, progress);
     if (patch_cnmt.title_id != 0)
     {
         printf("===> Processing Patch Metadata:\n");
         std::string nspUPDFilename(std::string(nspFilename) + std::string(" [UPD]"));
-        cnmt_download_process(xci_ctx.tool_ctx, &patch_cnmt_xml, &patch_cnmt, &patch_nsp, saveNSP, nspUPDFilename.c_str());
+        cnmt_download_process(xci_ctx.tool_ctx, &patch_cnmt_xml, &patch_cnmt, &patch_nsp, saveNSP, nspUPDFilename.c_str(), progress);
     }
     if (addons_cnmt_ctx.count != 0)
     {
@@ -159,7 +159,7 @@ int ExtractXCI(const std::string& filename, const bool saveNSP)
         for (int i = 0; i < addons_cnmt_ctx.count; i++)
         {
             printf("===> Processing AddOn %i Metadata:\n", i + 1);
-            cnmt_gamecard_process(xci_ctx.tool_ctx, &addons_cnmt_ctx.addon_cnmt_xml[i], &addons_cnmt_ctx.addon_cnmt[i], &addon_nsps[i], saveNSP, nspDLCFilename.c_str());
+            cnmt_gamecard_process(xci_ctx.tool_ctx, &addons_cnmt_ctx.addon_cnmt_xml[i], &addons_cnmt_ctx.addon_cnmt[i], &addon_nsps[i], saveNSP, nspDLCFilename.c_str(), progress);
         }
     }
 
@@ -194,21 +194,21 @@ int ExtractXCI(const std::string& filename, const bool saveNSP)
     return 0;
 }
 
-int ConvertXCI(const std::string&  filename)
+int ConvertXCI(const std::string& filename, float* progress)
 {
-    return ExtractXCI(filename, true);
+    return ExtractXCI(filename, true, progress);
 }
 
-int InstallXCI(const std::string& filename, const FsStorageId destStorageId, const bool ignoreReqFirmVersion)
+int InstallXCI(const std::string& filename, const FsStorageId destStorageId, const bool ignoreReqFirmVersion, float* progress)
 {
     // Extract
-    ExtractXCI(filename);
+    ExtractXCI(filename, false, progress);
 
     // Install
     char outputDir[MAX_PATH];
     GetFileBasename(outputDir, filename.c_str());
     LOG("\nInstalling folder %s...\n", outputDir);
-    InstallExtracted(std::string(outputDir));
+    InstallExtracted(std::string(outputDir), destStorageId, ignoreReqFirmVersion, progress);
 
     // Clean-up
     RmDirRecursive(outputDir);

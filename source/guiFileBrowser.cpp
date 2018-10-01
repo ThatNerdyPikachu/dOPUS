@@ -1,8 +1,8 @@
 #include "guiFileBrowser.h"
 #include <nxFramework/SDL/SDLRender.h>
 #include <nxFramework/SDL/SDLHelper.h>
-#include <nspHelper.h>
-#include <xciHelper.h>
+#include <nxFramework/nspHelper.h>
+#include <nxFramework/xciHelper.h>
 #include <algorithm>
 #include "gui.h"
 
@@ -12,10 +12,11 @@
 using namespace NXFramework;
 
 GUIFileBrowser::GUIFileBrowser(const GUI* gui)
-: rootGui(gui)
+: GUIComponent(gui)
+, dlgInstall(gui)
 {
-    assert(gui != nullptr);
     strcpy(curDir, START_PATH);
+    dlgInstall.SetEnabled(false);
 }
 void GUIFileBrowser::Initialize()
 {
@@ -48,7 +49,7 @@ void GUIFileBrowser::Render(const double timer)
 		if(i >= cursor.top)
 		{
 			if (i == cursor.current)
-				SDL::DrawRect(SDL::Renderer, 0, topCoord + (37 * printed), 1280, 36, SELECTOR_COLOUR_LIGHT);
+				SDL::DrawRect(SDL::Renderer, 0, topCoord + (37 * printed), 1280, 36, SELECTOR_COL);
 
 			char path[512];
 			strcpy(path, curDir);
@@ -66,7 +67,7 @@ void GUIFileBrowser::Render(const double timer)
             char dateString[256];
             GetFileModifiedTime(std::string(std::string(curDir) + (char*)dirEntries[i].name).c_str(), dateString);
 			TTF_SizeText(rootGui->FontHandle(GUI::Roboto_small), dateString, &widthDate, NULL);
-			SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto_small), 1260 - widthDate, 145 + (37 * printed), TEXT_MIN_COLOUR_LIGHT, dateString);
+			SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto_small), 1260 - widthDate, 145 + (37 * printed), TEXT_MIN_COL, dateString);
 #endif
 			// Folder / File size
             if (!dirEntries[i].isDir)
@@ -75,13 +76,13 @@ void GUIFileBrowser::Render(const double timer)
 				char size[16];
                 GetSizeString(size, dirEntries[i].size);
 				TTF_SizeText(rootGui->FontHandle(GUI::Roboto_small), size, &width, NULL);
-				SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto_small), 1260 - width - widthDate, topCoord + (37 * printed), TEXT_MIN_COLOUR_LIGHT, size);
+				SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto_small), 1260 - width - widthDate, topCoord + (37 * printed), TEXT_MIN_COL, size);
 			}
 			else
             {
                 int width = 0;
 				TTF_SizeText(rootGui->FontHandle(GUI::Roboto_small), "Folder", &width, NULL);
-				SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto_small), 1260 - width - widthDate, topCoord + 7 + (37 * printed), TEXT_MIN_COLOUR_LIGHT, "Folder");
+				SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto_small), 1260 - width - widthDate, topCoord + 7 + (37 * printed), TEXT_MIN_COL, "Folder");
             }
 
    			char buf[64];
@@ -89,18 +90,112 @@ void GUIFileBrowser::Render(const double timer)
 			buf[sizeof(buf) - 1] = '\0';
 			int height = 0;
 			TTF_SizeText(rootGui->FontHandle(GUI::Roboto), buf, NULL, &height);
-			SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto), 65, topCoord + ((37 - height)/2) + (37 * printed), BLACK,
+			SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto), 65, topCoord + ((37 - height)/2) + (37 * printed), WHITE,
                  (strncmp((char*)dirEntries[i].name, "..", 2) == 0)?"Parent folder":buf);
 
 			printed++; // Increase printed counter
 		}
 	}
+    // Hint Bar
+    SDL::DrawRect(SDL::Renderer, 0, 680, 1280, 40, MENU_BAR_COL);
+    DirEntry& entry = dirEntries[cursor.current];
+    const char* fileExt = GetFileExt((char*)entry.name);
+    if(entry.isDir)
+    {
+        std::string keyA = "(A) Explore";
+        std::string keyB = "(B) Go up";
+        std::string keyX = "(X) Install extracted NSP/XCI";
+
+        int widthKeyA  = 0;
+        int heightKeyA = 0;
+        TTF_SizeText(rootGui->FontHandle(GUI::Roboto_small), keyA.c_str(), &widthKeyA, &heightKeyA);
+        SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto),
+                      12, (708 - heightKeyA), WHITE, keyA.c_str());
+
+        int widthKeyB  = 0;
+        int heightKeyB = 0;
+        TTF_SizeText(rootGui->FontHandle(GUI::Roboto_small), keyB.c_str(), &widthKeyB, &heightKeyB);
+        SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto),
+                      12 + widthKeyA + 45, (708 - heightKeyB), (strcmp(curDir, ROOT_PATH) != 0)?WHITE:DARK_GREY, keyB.c_str());
+
+        int widthKeyX  = 0;
+        int heightKeyX = 0;
+        TTF_SizeText(rootGui->FontHandle(GUI::Roboto_small), keyX.c_str(), &widthKeyX, &heightKeyX);
+        SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto),
+                      12 + widthKeyA + widthKeyB + 90, (708 - heightKeyX), WHITE, keyX.c_str());
+    }
+    else
+    if((strncasecmp(fileExt, "nsp", 3) == 0) || (strncasecmp(fileExt, "xci", 3) == 0))
+    {
+        std::string keyA = "(A) Install";
+        std::string keyB = "(B) Go up";
+        std::string keyX = "(X) Extract";
+        std::string keyY = "(Y) Convert to NSP";
+
+        int widthKeyA  = 0;
+        int heightKeyA = 0;
+        TTF_SizeText(rootGui->FontHandle(GUI::Roboto_small), keyA.c_str(), &widthKeyA, &heightKeyA);
+        SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto),
+                      12, (708 - heightKeyA), WHITE, keyA.c_str());
+
+        int widthKeyB  = 0;
+        int heightKeyB = 0;
+        TTF_SizeText(rootGui->FontHandle(GUI::Roboto_small), keyB.c_str(), &widthKeyB, &heightKeyB);
+        SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto),
+                      12 + widthKeyA + 45, (708 - heightKeyB), (strcmp(curDir, ROOT_PATH) != 0)?WHITE:DARK_GREY, keyB.c_str());
+
+        int widthKeyX  = 0;
+        int heightKeyX = 0;
+        TTF_SizeText(rootGui->FontHandle(GUI::Roboto_small), keyX.c_str(), &widthKeyX, &heightKeyX);
+        SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto),
+                      12 + widthKeyA + widthKeyB + 90, (708 - heightKeyX), WHITE, keyX.c_str());
+
+        if(strncasecmp(fileExt, "xci", 3) == 0)
+        {
+            int widthKeyY  = 0;
+            int heightKeyY = 0;
+            TTF_SizeText(rootGui->FontHandle(GUI::Roboto_small), keyY.c_str(), &widthKeyY, &heightKeyY);
+            SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto),
+                          12 + widthKeyA + widthKeyB + widthKeyX + 135, (708 - heightKeyY), WHITE, keyY.c_str());
+        }
+    }
+    {
+        std::string keyPlus = "(+) Quit";
+        int widthKeyPlus  = 0;
+        int heightKeyPlus = 0;
+        TTF_SizeText(rootGui->FontHandle(GUI::Roboto_small), keyPlus.c_str(), &widthKeyPlus, &heightKeyPlus);
+        SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto),
+                      1230 - widthKeyPlus, (708 - heightKeyPlus), WHITE, keyPlus.c_str());
+    }
+
+    if(dlgInstall.IsEnabled())
+        dlgInstall.Render(timer);
 }
 
 void GUIFileBrowser::Update(const double timer, const u64 kDown)
 {
+    if(dlgInstall.GetState() == DLGInstall::DLG_DONE)
+    {
+        dlgInstall.SetState(DLGInstall::DLG_IDLE);
+        dlgInstall.SetEnabled(false);
+        LOG("DLG done, hiding...\n");
+
+        // Refresh folder view
+        PopulateFiles(curDir, dirEntries, extFilters);
+        cursor.current  = 0;
+        cursor.top      = 0;
+    }
+
+    if(dlgInstall.IsEnabled())
+    {
+        dlgInstall.Update(timer, kDown);
+    }
+    else
     if(dirEntries.size() > 0)
     {
+        DirEntry& entry = dirEntries[cursor.current];
+        const char* fileExt = GetFileExt((char*)entry.name);
+
         if (kDown & KEY_DUP)
         {
             cursor.current = std::max(cursor.current - 1, 0);
@@ -147,9 +242,8 @@ void GUIFileBrowser::Update(const double timer, const u64 kDown)
             wait(5);
         }
         else
-        if (kDown & KEY_A) // Install
+        if (kDown & KEY_A)
 		{
-		    DirEntry& entry = dirEntries[cursor.current];
 		    if(entry.isDir)
             {
                 Navigate(curDir, dirEntries[cursor.current], false);
@@ -162,79 +256,53 @@ void GUIFileBrowser::Update(const double timer, const u64 kDown)
             }
             else
             {
-                if(strncasecmp(GetFileExt((char*)entry.name), "nsp", 3) == 0)
+                // Install NSP or XCI
+                if( (strncasecmp(fileExt, "xci", 3) == 0) ||
+                    (strncasecmp(fileExt, "nsp", 3) == 0))
                 {
-                    std::string NSPPath = curDir + std::string((char*)entry.name);
-                    LOG("\nInstalling %s...\n", NSPPath.c_str());
-                    InstallNSP(NSPPath);
-                }
-                else
-                if(strncasecmp(GetFileExt((char*)entry.name), "xci", 3) == 0)
-                {
-                    std::string XCIPath = curDir + std::string((char*)entry.name);
-                    LOG("\nInstalling %s...\n", XCIPath.c_str());
-                    InstallXCI(XCIPath);
-
-                    // Refresh folder view
-                    PopulateFiles(curDir, dirEntries, extFilters);
-                    cursor.current  = 0;
-                    cursor.top      = 0;
+                    dlgInstall.SetMode(DLGInstall::DLG_INSTALL);
+                    dlgInstall.SetState(DLGInstall::DLG_CONFIRMATION);
+                    dlgInstall.SetFilename(std::string(curDir), std::string((char*)entry.name));
+                    dlgInstall.SetEnabled(true);
                 }
             }
 		}
 		else
-        if (kDown & KEY_X) // Extract
+        if (kDown & KEY_X)
         {
-   		    DirEntry& entry = dirEntries[cursor.current];
 		    if(entry.isDir)
             {
-                std::string NCAPath = curDir + std::string((char*)entry.name);
-                LOG("\nInstalling folder %s...\n", NCAPath.c_str());
-                InstallExtracted(NCAPath.c_str());
+                // Install Extracted
+                dlgInstall.SetMode(DLGInstall::DLG_INSTALL_EXTRACTED);
+                dlgInstall.SetState(DLGInstall::DLG_CONFIRMATION);
+                dlgInstall.SetFilename(std::string(curDir), std::string((char*)entry.name));
+                dlgInstall.SetEnabled(true);
             }
             else
             {
-                if(strncasecmp(GetFileExt((char*)entry.name), "nsp", 3) == 0)
+                // Extract NSP or XCI
+                if( (strncasecmp(fileExt, "xci", 3) == 0) ||
+                    (strncasecmp(fileExt, "nsp", 3) == 0))
                 {
-                    std::string NSPPath = curDir + std::string((char*)entry.name);
-                    LOG("\nExtracting %s...\n", NSPPath.c_str());
-                    ExtractNSP(NSPPath);
-
-                    // Refresh folder view
-                    PopulateFiles(curDir, dirEntries, extFilters);
-                    cursor.current  = 0;
-                    cursor.top      = 0;
-                }
-                else
-                if(strncasecmp(GetFileExt((char*)entry.name), "xci", 3) == 0)
-                {
-                    std::string XCIPath = curDir + std::string((char*)entry.name);
-                    LOG("\nExtracting %s...:)\n", XCIPath.c_str());
-                    ExtractXCI(XCIPath);
-
-                    // Refresh folder view
-                    PopulateFiles(curDir, dirEntries, extFilters);
-                    cursor.current  = 0;
-                    cursor.top      = 0;
+                    dlgInstall.SetMode(DLGInstall::DLG_EXTRACT);
+                    dlgInstall.SetState(DLGInstall::DLG_CONFIRMATION);
+                    dlgInstall.SetFilename(std::string(curDir), std::string((char*)entry.name));
+                    dlgInstall.SetEnabled(true);
                 }
             }
         }
 		else
-        if (kDown & KEY_Y) // Convert
+        if (kDown & KEY_Y)
         {
-   		    DirEntry& entry = dirEntries[cursor.current];
 		    if(!entry.isDir)
             {
-                if(strncasecmp(GetFileExt((char*)entry.name), "xci", 3) == 0)
+                // Convert XCI to NSP
+                if(strncasecmp(fileExt, "xci", 3) == 0)
                 {
-                    std::string XCIPath = curDir + std::string((char*)entry.name);
-                    LOG("\nConverting %s...\n", XCIPath.c_str());
-                    ConvertXCI(XCIPath);
-
-                    // Refresh folder view
-                    PopulateFiles(curDir, dirEntries, extFilters);
-                    cursor.current  = 0;
-                    cursor.top      = 0;
+                    dlgInstall.SetMode(DLGInstall::DLG_CONVERT);
+                    dlgInstall.SetState(DLGInstall::DLG_CONFIRMATION);
+                    dlgInstall.SetFilename(std::string(curDir), std::string((char*)entry.name));
+                    dlgInstall.SetEnabled(true);
                 }
             }
         }

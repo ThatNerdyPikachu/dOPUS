@@ -126,7 +126,7 @@ void GUI::Initialize()
     LoadTextures();
     LoadFonts();
     guiFileBrowser->Initialize();
-    guiFileBrowser->SetVisibile(true);
+    guiFileBrowser->SetEnabled(true);
 }
 
 void GUI::Shutdown()
@@ -187,15 +187,22 @@ void GUI::StatusBarDisplayTime(void)
 
 void GUI::Render(const double timer)
 {
-    SDL::DrawRect(SDL::Renderer, 0, 0, 1280, 40, STATUS_BAR_LIGHT);	// Status bar
-    SDL::DrawRect(SDL::Renderer, 0, 40, 1280, 40, MENU_BAR_LIGHT);	// Directory bar
+    SDL::DrawRect(SDL::Renderer, 0, 0, 1280, 40, STATUS_BAR_COL);	// Status bar
+    SDL::DrawRect(SDL::Renderer, 0, 40, 1280, 40, MENU_BAR_COL);	// Directory bar
+
+    int height = 0;
+    TTF_SizeText(fonts[Roboto], "dOPUS", NULL, &height);
+    SDL::DrawText(SDL::Renderer, fonts[Roboto], 12, (40 - height) / 2, CYAN, "dOPUS 0.6");
+
     StatusBarDisplayTime();
-    guiFileBrowser->Render(timer);
+    if(guiFileBrowser->IsEnabled())
+        guiFileBrowser->Render(timer);
 }
 
 void GUI::Update(const double timer, const u64 kDown)
 {
-    guiFileBrowser->Update(timer, kDown);
+    if(guiFileBrowser->IsEnabled())
+        guiFileBrowser->Update(timer, kDown);
 }
 
 GUI::GUI()

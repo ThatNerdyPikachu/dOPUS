@@ -3,6 +3,7 @@
 #include <common.h>
 #include <fileHelper.h>
 #include "gui.h"
+#include "dlgInstall.h"
 
 using namespace NXFramework;
 
@@ -20,10 +21,10 @@ private:
         int current = 0;
         int top    = 0;
     };
-    const GUI*              rootGui;
     char                    curDir[512];
     Cursor                  cursor;
     std::vector<DirEntry>   dirEntries;
     std::vector<std::string>extFilters;
     std::vector<Cursor>     cursorStack;
+    DLGInstall              dlgInstall;
 };

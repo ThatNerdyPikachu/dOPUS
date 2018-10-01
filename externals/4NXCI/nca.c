@@ -468,7 +468,7 @@ void nca_saved_meta_process(nca_ctx_t *ctx, filepath_t *filepath)
     }
 }
 
-void nca_gamecard_process(nca_ctx_t *ctx, filepath_t *filepath, int index, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_ctx_t *cnmt_ctx, nsp_ctx_t *nsp_ctx)
+void nca_gamecard_process(nca_ctx_t *ctx, filepath_t *filepath, int index, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_ctx_t *cnmt_ctx, nsp_ctx_t *nsp_ctx, float* progress)
 {
     /* Decrypt header */
     if (!nca_decrypt_header(ctx))
@@ -514,7 +514,7 @@ void nca_gamecard_process(nca_ctx_t *ctx, filepath_t *filepath, int index, cnmt_
 
     // Calculate SHA-256 hash
     sha_ctx_t *sha_ctx = new_sha_ctx(HASH_TYPE_SHA256, 0);
-    uint64_t read_size = 0x61A8000; // 100 MB buffer.
+    uint64_t read_size = 0x400000; // 4 MB buffer.
     unsigned char *buf = malloc(read_size);
     if (buf == NULL)
     {
@@ -524,8 +524,19 @@ void nca_gamecard_process(nca_ctx_t *ctx, filepath_t *filepath, int index, cnmt_
     fseeko64(ctx->file, 0, SEEK_SET);
     uint64_t ofs = 0;
     uint64_t filesize = nca_size;
+
+    float debugProgress = 0;
+    uint64_t readBytes = 0;
+    uint64_t sizeToRead = filesize-ofs;
+
     while (ofs < filesize)
     {
+        debugProgress = (float)readBytes / (float)sizeToRead;
+        if(progress != NULL) *progress = debugProgress;
+
+        if (readBytes % (0x400000 * 3) == 0)
+            printf("> Patching Progress: %lu/%lu MB (%d%s)\n", (readBytes / 1000000), (sizeToRead / 1000000), (int)(debugProgress * 100.0), "%");
+
         if (ofs + read_size >= filesize)
             read_size = filesize - ofs;
         if (fread(buf, 1, read_size, ctx->file) != read_size)
@@ -535,7 +546,9 @@ void nca_gamecard_process(nca_ctx_t *ctx, filepath_t *filepath, int index, cnmt_
         }
         sha_update(sha_ctx, buf, read_size);
         ofs += read_size;
+        readBytes += read_size;
     }
+    if(progress != NULL) *progress = 1.f;
     fclose(ctx->file);
     free(buf);
     unsigned char *hash_result = (unsigned char *)calloc(1, 32);
