@@ -347,12 +347,12 @@ void DLGInstall::Render(const double timer)
             TTF_SizeText(rootGui->FontHandle(GUI::Roboto), "SD Card", &txt_width, &txt_height);
             SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto),
                           190+350, 375-txt_height,
-                          (destStorageId == FsStorageId_SdCard)  ?TITLE_COL:DARK_GREY, "SD Card");
-            
+                          (destStorageId == FsStorageId_SdCard)  ?CYAN:DARK_GREY, "SD Card");
+
 	    TTF_SizeText(rootGui->FontHandle(GUI::Roboto), "Nand", &txt_width, &txt_height);
             SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto),
                           190+900-350-txt_width, 375-txt_height,
-                          (destStorageId == FsStorageId_NandUser)?TITLE_COL:DARK_GREY, "Nand");
+                          (destStorageId == FsStorageId_NandUser)?CYAN:DARK_GREY, "Nand");
         }
     }
 
