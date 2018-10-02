@@ -6,7 +6,7 @@
 #include "pfs0.h"
 #include "utils.h"
 
-void nsp_create(nsp_ctx_t *nsp_ctx, float* progress)
+void nsp_create(nsp_ctx_t *nsp_ctx, struct Progress* progress)
 {
     // nsp file name is tid.nsp
     printf("Creating nsp %s\n", nsp_ctx->filepath.char_path);
@@ -85,7 +85,7 @@ void nsp_create(nsp_ctx_t *nsp_ctx, float* progress)
         while (ofs < nsp_ctx->nsp_entry[i2].filesize)
         {
             debugProgress = (float)ofs / (float)nsp_ctx->nsp_entry[i2].filesize;
-            if(progress != NULL) *progress = debugProgress;
+            if(progress != NULL) progress->percent = debugProgress;
 
             if (ofs % (0x400000 * 3) == 0)
                 printf("> Saving Progress: %lu/%lu MB (%d%s)\n", (ofs / 1000000), (nsp_ctx->nsp_entry[i2].filesize / 1000000), (int)(debugProgress * 100.0), "%");
@@ -100,6 +100,7 @@ void nsp_create(nsp_ctx_t *nsp_ctx, float* progress)
             fwrite(buf, read_size, 1, nsp_file);
             ofs += read_size;
         }
+        if(progress != NULL) progress->percent = 1.f;
         fclose(nsp_data_file);
         free(buf);
     }

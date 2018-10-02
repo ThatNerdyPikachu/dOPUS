@@ -32,7 +32,7 @@ public:
     void Render(const double timer) override;
     void Update(const double timer, const u64 kDown) override;
     void SetFilename(std::string filedir, std::string filename) { this->filedir = filedir; this->filename = filename; }
-    void SetEnabled(bool enabled) override { progress = 0.f; GUIComponent::SetEnabled(enabled); }
+    void SetEnabled(bool enabled) override { progress.percent = 0.f; progress.state = 0; GUIComponent::SetEnabled(enabled); }
 
     void        SetState(DlgState dlgState) { this->dlgState = dlgState; }
     DlgState    GetState()                  { return dlgState; }
@@ -45,6 +45,6 @@ private:
     std::string filedir;
     std::string filename;
     FsStorageId destStorageId   = FsStorageId_SdCard;
-    float       progress        = 0.f;
+    Progress    progress        = { 0.f, 0 };
     bool        enoughSpace     = true;
 };

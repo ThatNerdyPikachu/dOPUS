@@ -49,7 +49,7 @@ typedef struct {
     xci_header_t header;
 } xci_ctx_t;
 
-void xci_process(xci_ctx_t *ctx, float* progress);
-void xci_save   (xci_ctx_t *ctx, float* progress);
+void xci_process(xci_ctx_t *ctx, struct Progress* progress);
+void xci_save   (xci_ctx_t *ctx, struct Progress* progress);
 
 #endif

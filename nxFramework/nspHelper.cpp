@@ -245,7 +245,7 @@ void InstallApplicationRecord(nx::ncm::ContentMeta& contentMeta, const FsStorage
     ASSERT_OK(nsPushApplicationRecord(baseTitleId, 0x3, storageRecords.data(), storageRecords.size() * sizeof(ContentStorageRecord)), "Failed to push application record\n");
 }
 
-void InstallNCA(SimpleFileSystem& simpleFS, const NcmNcaId& ncaId, const FsStorageId destStorageId, float* progress = nullptr)
+void InstallNCA(SimpleFileSystem& simpleFS, const NcmNcaId& ncaId, const FsStorageId destStorageId, Progress* progress = nullptr)
 {
     std::string ncaName = tin::util::GetNcaIdString(ncaId);
 
@@ -289,7 +289,7 @@ void InstallNCA(SimpleFileSystem& simpleFS, const NcmNcaId& ncaId, const FsStora
     {
         // Clear the buffer before we read anything, just to be sure
         debugProgress = (float)fileOff / (float)ncaSize;
-        if(progress != nullptr) *progress = debugProgress;
+        if(progress != nullptr) progress->percent = debugProgress;
 
         if (fileOff % (0x400000 * 3) == 0)
             LOG("> Progress: %lu/%lu MB (%d%s)\n", (fileOff / 1000000), (ncaSize / 1000000), (int)(debugProgress * 100.0), "%");
@@ -301,7 +301,7 @@ void InstallNCA(SimpleFileSystem& simpleFS, const NcmNcaId& ncaId, const FsStora
         contentStorage.WritePlaceholder(ncaId, fileOff, readBuffer.get(), readSize);
         fileOff += readSize;
     }
-    if(progress != nullptr) *progress = 1.f;
+    if(progress != nullptr) progress->percent = 1.f;
 
     // Clean up the line for whatever comes next
     LOG("                                                           \n");
@@ -322,7 +322,7 @@ void InstallNCA(SimpleFileSystem& simpleFS, const NcmNcaId& ncaId, const FsStora
     catch (...) {}
 }
 
-bool InstallNSP(const std::string& filename, const FsStorageId destStorageId, const bool ignoreReqFirmVersion, const bool isFolder, float* progress)
+bool InstallNSP(const std::string& filename, const FsStorageId destStorageId, const bool ignoreReqFirmVersion, const bool isFolder, Progress* progress)
 {
     try
     {
@@ -407,7 +407,7 @@ bool InstallNSP(const std::string& filename, const FsStorageId destStorageId, co
     return true;
 }
 
-bool InstallExtracted(const std::string& filename, const FsStorageId destStorageId, const bool ignoreReqFirmVersion, float* progress)
+bool InstallExtracted(const std::string& filename, const FsStorageId destStorageId, const bool ignoreReqFirmVersion, Progress* progress)
 {
     return InstallNSP(filename, destStorageId, ignoreReqFirmVersion, true, progress);
 }
@@ -515,7 +515,7 @@ bool ExtractNSP_NCAS(const std::string&  filename)
 
 //            0x10 = 16            = PFS0 (4bytes) + numFiles (4bytes) + str_table_len (4bytes) + unused (4bytes)
 // numFiles * 0x18 = numFiles * 24 = data_offset (8bytes) + data_size (8bytes) + str_offset (4bytes) + unused (4bytes)
-bool ExtractNSP(const std::string& filename, float* progress)
+bool ExtractNSP(const std::string& filename, Progress* progress)
 {
     // Output Path
     char outputDir[1024];
@@ -630,7 +630,7 @@ bool ExtractNSP(const std::string& filename, float* progress)
 
             // Clear the buffer before we read anything, just to be sure
             debugProgress = (float)fileOff / (float)fileDesc.dataSize;
-            if(progress != nullptr) *progress = debugProgress;
+            if(progress != nullptr) progress->percent = debugProgress;
 
             if (fileOff % (0x400000 * 3) == 0)
                 LOG("> Progress: %lu/%lu MB (%d%s)\n", (fileOff / 1000000), (fileDesc.dataSize / 1000000), (int)(debugProgress * 100.0), "%");
@@ -643,7 +643,7 @@ bool ExtractNSP(const std::string& filename, float* progress)
             fileOff += readSize;
         }
         fclose(outfile);
-        if(progress != nullptr) *progress = 1.f;
+        if(progress != nullptr) progress->percent = 1.f;
     }
     fclose(NSPfile);
     return true;

@@ -18,7 +18,7 @@ namespace
         std::string filename;
         FsStorageId destStorageId;
         bool        ignoreReqFirmVersion;
-        float*      progress;
+        Progress*   progress;
         bool*       running;
         bool        deleteSourceFile;
     };
@@ -343,13 +343,13 @@ void DLGInstall::Render(const double timer)
            dlgMode == DLG_INSTALL_EXTRACTED)
         {
             int txt_height = 0;
-	    int txt_width  = 0;
+	        int txt_width  = 0;
             TTF_SizeText(rootGui->FontHandle(GUI::Roboto), "SD Card", &txt_width, &txt_height);
             SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto),
                           190+350, 375-txt_height,
                           (destStorageId == FsStorageId_SdCard)  ?CYAN:DARK_GREY, "SD Card");
 
-	    TTF_SizeText(rootGui->FontHandle(GUI::Roboto), "Nand", &txt_width, &txt_height);
+            TTF_SizeText(rootGui->FontHandle(GUI::Roboto), "Nand", &txt_width, &txt_height);
             SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto),
                           190+900-350-txt_width, 375-txt_height,
                           (destStorageId == FsStorageId_NandUser)?CYAN:DARK_GREY, "Nand");
@@ -362,14 +362,14 @@ void DLGInstall::Render(const double timer)
         int borderSize        = 3;
 
         char percentStr[10];
-        sprintf(percentStr, "%d%s", (int)(progress * 100.0), "%");
+        sprintf(percentStr, "%d%s", (int)(progress.percent * 100.0), "%");
         int percent_witdh  = 0;
         int percent_height = 0;
         TTF_SizeText(rootGui->FontHandle(GUI::Roboto), percentStr, &percent_witdh, &percent_height);
         SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto), 215+barSize-percent_witdh, 375-borderSize-percent_height-5, TITLE_COL, percentStr);
 
         // Progress bar
-        float progressBarSize = barSize * progress;
+        float progressBarSize = barSize * progress.percent;
         SDL::DrawRect(SDL::Renderer, 215-borderSize , 375-borderSize, barSize+borderSize*2, 20+borderSize*2 , DARK_GREY);
         SDL::DrawRect(SDL::Renderer, 215            , 375           , (int)progressBarSize, 20              , CYAN);
     }

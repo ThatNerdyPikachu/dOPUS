@@ -25,7 +25,7 @@ const unsigned char xci_header_pubk[0x100] = {
     0x9A, 0xC1, 0xDD, 0x62, 0x86, 0x9C, 0x2E, 0xE1, 0x2D, 0x6F, 0x62, 0x67, 0x51, 0x08, 0x0E, 0xCF
 };
 
-void xci_process(xci_ctx_t *ctx, float* progress) {
+void xci_process(xci_ctx_t *ctx, struct Progress* progress) {
     fseeko64(ctx->file, 0, SEEK_SET);
     if (fread(&ctx->header, 1, 0x200, ctx->file) != 0x200) {
         fprintf(stderr, "Failed to read XCI header!\n");
@@ -91,7 +91,7 @@ void xci_process(xci_ctx_t *ctx, float* progress) {
 
 }
 
-void xci_save(xci_ctx_t *ctx, float* progress) {
+void xci_save(xci_ctx_t *ctx, struct Progress* progress) {
     /* Save Secure Partition. */
 	printf("Saving Secure Partition...\n");
 	os_makedir(ctx->tool_ctx->settings.secure_dir_path.os_path);

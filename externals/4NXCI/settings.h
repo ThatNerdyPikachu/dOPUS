@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include "types.h"
 #include "filepath.h"
+#include <nxFramework/common.h>
+
 
 typedef enum {
     KEYSET_DEV,

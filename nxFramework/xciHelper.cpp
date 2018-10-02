@@ -66,7 +66,7 @@ void RenameNCAs(const xci_ctx_t& xci_ctx)
             RenameNCAs(xci_ctx, addon_nsps[i]);
 }
 
-int ExtractXCI(const std::string& filename, const bool saveNSP, float* progress)
+int ExtractXCI(const std::string& filename, const bool saveNSP, Progress* progress)
 {
     nxci_ctx_t tool_ctx;
     char input_name[0x200];
@@ -194,12 +194,12 @@ int ExtractXCI(const std::string& filename, const bool saveNSP, float* progress)
     return 0;
 }
 
-int ConvertXCI(const std::string& filename, float* progress)
+int ConvertXCI(const std::string& filename, Progress* progress)
 {
     return ExtractXCI(filename, true, progress);
 }
 
-int InstallXCI(const std::string& filename, const FsStorageId destStorageId, const bool ignoreReqFirmVersion, const bool deleteXCI, float* progress)
+int InstallXCI(const std::string& filename, const FsStorageId destStorageId, const bool ignoreReqFirmVersion, const bool deleteXCI, Progress* progress)
 {
     // Extract
     ExtractXCI(filename, false, progress);

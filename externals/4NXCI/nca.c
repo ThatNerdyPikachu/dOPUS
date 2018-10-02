@@ -468,7 +468,7 @@ void nca_saved_meta_process(nca_ctx_t *ctx, filepath_t *filepath)
     }
 }
 
-void nca_gamecard_process(nca_ctx_t *ctx, filepath_t *filepath, int index, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_ctx_t *cnmt_ctx, nsp_ctx_t *nsp_ctx, float* progress)
+void nca_gamecard_process(nca_ctx_t *ctx, filepath_t *filepath, int index, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_ctx_t *cnmt_ctx, nsp_ctx_t *nsp_ctx, struct Progress* progress)
 {
     /* Decrypt header */
     if (!nca_decrypt_header(ctx))
@@ -532,7 +532,7 @@ void nca_gamecard_process(nca_ctx_t *ctx, filepath_t *filepath, int index, cnmt_
     while (ofs < filesize)
     {
         debugProgress = (float)readBytes / (float)sizeToRead;
-        if(progress != NULL) *progress = debugProgress;
+        if(progress != NULL) progress->percent = debugProgress;
 
         if (readBytes % (0x400000 * 3) == 0)
             printf("> Patching Progress: %lu/%lu MB (%d%s)\n", (readBytes / 1000000), (sizeToRead / 1000000), (int)(debugProgress * 100.0), "%");
@@ -548,7 +548,7 @@ void nca_gamecard_process(nca_ctx_t *ctx, filepath_t *filepath, int index, cnmt_
         ofs += read_size;
         readBytes += read_size;
     }
-    if(progress != NULL) *progress = 1.f;
+    if(progress != NULL) progress->percent = 1.f;
     fclose(ctx->file);
     free(buf);
     unsigned char *hash_result = (unsigned char *)calloc(1, 32);

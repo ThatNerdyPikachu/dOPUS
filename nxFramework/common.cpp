@@ -1,6 +1,6 @@
 #include "common.h"
 
-void printBytes(u8 *bytes, size_t size, bool includeHeader)
+void printBytes(unsigned char *bytes, size_t size, bool includeHeader)
 {
     int count = 0;
 

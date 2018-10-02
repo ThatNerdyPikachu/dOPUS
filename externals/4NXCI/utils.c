@@ -8,6 +8,7 @@
 #include "utils.h"
 #include "filepath.h"
 #include "sha.h"
+#include "settings.h"
 
 uint32_t align(uint32_t offset, uint32_t alignment) {
     uint32_t mask = ~(alignment-1);
@@ -79,7 +80,7 @@ void save_buffer_to_directory_file(void *buf, uint64_t size, struct filepath *di
     }
 }
 
-void save_file_section(FILE *f_in, uint64_t ofs, uint64_t total_size, filepath_t *filepath, float* progress) {
+void save_file_section(FILE *f_in, uint64_t ofs, uint64_t total_size, filepath_t *filepath, struct Progress* progress) {
     FILE *f_out = os_fopen(filepath->os_path, OS_MODE_WRITE);
 
     if (f_out == NULL) {
@@ -103,7 +104,7 @@ void save_file_section(FILE *f_in, uint64_t ofs, uint64_t total_size, filepath_t
 
     while (ofs < end_ofs) {
         debugProgress = (float)readBytes / (float)sizeToRead;
-        if(progress != NULL) *progress = debugProgress;
+        if(progress != NULL) progress->percent = debugProgress;
 
         if (readBytes % (0x400000 * 3) == 0)
             printf("> Saving Progress: %lu/%lu MB (%d%s)\n", (readBytes / 1000000), (sizeToRead / 1000000), (int)(debugProgress * 100.0), "%");
@@ -117,7 +118,7 @@ void save_file_section(FILE *f_in, uint64_t ofs, uint64_t total_size, filepath_t
         ofs += read_size;
         readBytes += read_size;
     }
-    if(progress != NULL) *progress = 1.f;
+    if(progress != NULL) progress->percent = 1.f;
 
     fclose(f_out);
 

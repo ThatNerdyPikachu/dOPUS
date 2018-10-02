@@ -3,7 +3,7 @@
 #include "hfs0.h"
 #include "nca.h"
 
-void hfs0_process(hfs0_ctx_t *ctx, float* progress) {
+void hfs0_process(hfs0_ctx_t *ctx, struct Progress* progress) {
     /* Read *just* safe amount. */
     hfs0_header_t raw_header; 
     fseeko64(ctx->file, ctx->offset, SEEK_SET);
@@ -65,7 +65,7 @@ int hfs0_saved_nca_process(filepath_t *filepath, nxci_ctx_t *tool)
     return 1;
 }
 
-void hfs0_save_file(hfs0_ctx_t *ctx, uint32_t i, filepath_t *dirpath, float* progress) {
+void hfs0_save_file(hfs0_ctx_t *ctx, uint32_t i, filepath_t *dirpath, struct Progress* progress) {
     if (i >= ctx->header->num_files) {
         fprintf(stderr, "Could not save file %"PRId32"!\n", i);
         exit(EXIT_FAILURE);
@@ -90,7 +90,7 @@ void hfs0_save_file(hfs0_ctx_t *ctx, uint32_t i, filepath_t *dirpath, float* pro
 }
 
 
-void hfs0_save(hfs0_ctx_t *ctx, float* progress) {
+void hfs0_save(hfs0_ctx_t *ctx, struct Progress* progress) {
     /* Extract to directory. */
     filepath_t *dirpath = NULL;
     if (ctx->tool_ctx->file_type == FILETYPE_HFS0 && ctx->tool_ctx->settings.out_dir_path.enabled) {

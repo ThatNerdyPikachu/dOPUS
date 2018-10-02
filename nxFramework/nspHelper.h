@@ -1,22 +1,22 @@
 #pragma once
-#include <common.h>
 #include <string>
-#include <Tinfoil/include/nx/content_meta.hpp>
+#include <Tinfoil/include/nx/fs.hpp>
+
+struct Progress;
 
 namespace NXFramework
 {
 
-bool ExtractNSP_NCAs(   const std::string&  filename);
 bool ExtractNSP     (   const std::string&  filename,
-                        float*              progress             = nullptr);
+                        Progress*           progress             = nullptr);
 bool InstallNSP     (   const std::string&  filename,
                         const FsStorageId   destStorageId        = FsStorageId_SdCard,
                         const bool          ignoreReqFirmVersion = true,
                         const bool          isFolder             = false,
-                        float*              progress             = nullptr);
+                        Progress*           progress             = nullptr);
 bool InstallExtracted(  const std::string&  filename,
                         const FsStorageId   destStorageId        = FsStorageId_SdCard,
                         const bool          ignoreReqFirmVersion = true,
-                        float*              progress             = nullptr);
+                        Progress*           progress             = nullptr);
 
 }

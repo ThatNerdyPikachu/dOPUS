@@ -1,9 +1,10 @@
 #pragma once
 
+#ifdef __cplusplus
 #include <string.h>
 #include <vector>
-#include <stdio.h>
 #include <stdexcept>
+#include <stdio.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <sys/errno.h>
@@ -18,6 +19,7 @@
 
 #include "SDL/SDLRender.h"
 #include "SDL/SDLHelper.h"
+#endif
 
 #define wait(msec) svcSleepThread(10000000 * (s64)msec)
 
@@ -43,4 +45,11 @@
 
 #define ROOT_PATH "/"
 
-void printBytes(u8 *bytes, size_t size, bool includeHeader);
+void printBytes(unsigned char* bytes, size_t size, bool includeHeader);
+
+// Structure used to track progress and state in tasks/threads
+struct Progress
+{
+    float   percent;
+    uint    state;
+};

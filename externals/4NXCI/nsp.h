@@ -28,7 +28,7 @@ typedef struct {
     nsp_entry_t *nsp_entry;
 } nsp_ctx_t;
 
-void nsp_create(nsp_ctx_t *nsp_ctx, float* progress);
+void nsp_create(nsp_ctx_t *nsp_ctx, struct Progress* progress);
 
 extern nsp_ctx_t application_nsp;
 extern nsp_ctx_t patch_nsp;
