@@ -31,6 +31,7 @@ void DrawImageScale(SDL_Renderer *renderer, SDL_Texture *texture, int x, int y, 
 #define CYAN                    SDL::MakeColour(0, 255, 255, 255)
 #define GREY                    SDL::MakeColour(211, 211, 211, 255)
 #define DARK_GREY               SDL::MakeColour(75, 75, 75, 255)
+#define RED                     SDL::MakeColour(237, 0, 0, 255)
 
 #define GUI_COLORS 2
 #if (GUI_COLORS == 1)

@@ -40,10 +40,11 @@ public:
     DlgMode     GetMode ()                  { return dlgMode; }
 
 private:
-    DlgState dlgState = DLG_CONFIRMATION;
-    DlgMode  dlgMode  = DLG_INSTALL;
+    DlgState dlgState           = DLG_CONFIRMATION;
+    DlgMode  dlgMode            = DLG_INSTALL;
     std::string filedir;
     std::string filename;
-    FsStorageId destStorageId = FsStorageId_SdCard;
-    float       progress = 0.f;
+    FsStorageId destStorageId   = FsStorageId_SdCard;
+    float       progress        = 0.f;
+    bool        enoughSpace     = true;
 };
