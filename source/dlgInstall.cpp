@@ -326,7 +326,7 @@ void DLGInstall::Render(const double timer)
                   467  - options_cancel_height, dlgState == DLG_PROGRESS?DARK_GREY:TITLE_COL, "CANCEL");
 
     // OK
-    if(!enoughSpace)
+    if(enoughSpace)
     {
         int options_ok_width  = 0;
         TTF_SizeText(rootGui->FontHandle(GUI::Roboto), "(A) OK", &options_ok_width, NULL);
@@ -343,13 +343,15 @@ void DLGInstall::Render(const double timer)
            dlgMode == DLG_INSTALL_EXTRACTED)
         {
             int txt_height = 0;
-            TTF_SizeText(rootGui->FontHandle(GUI::Roboto), "SD Card", NULL, &txt_height);
+	    int txt_width  = 0;
+            TTF_SizeText(rootGui->FontHandle(GUI::Roboto), "SD Card", &txt_width, &txt_height);
             SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto),
-                          190+350    , 375-txt_height,
+                          190+350, 375-txt_height,
                           (destStorageId == FsStorageId_SdCard)  ?TITLE_COL:DARK_GREY, "SD Card");
-
+            
+	    TTF_SizeText(rootGui->FontHandle(GUI::Roboto), "Nand", &txt_width, &txt_height);
             SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto),
-                          190+900-350, 375-txt_height,
+                          190+900-350-txt_width, 375-txt_height,
                           (destStorageId == FsStorageId_NandUser)?TITLE_COL:DARK_GREY, "Nand");
         }
     }
