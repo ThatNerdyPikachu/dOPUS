@@ -5,7 +5,7 @@
 
 using namespace NXFramework;
 
-class AppInstaller : public App
+class dOPUS : public App
 {
 public:
     virtual void Initialize() override;
@@ -13,7 +13,7 @@ public:
     virtual void Render(const double timer) override;
     virtual void Update(const double timer, const u64 kDown) override;
 
-    AppInstaller() {}
+    dOPUS() {}
 
 private:
     GUI gui;

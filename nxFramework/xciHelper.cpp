@@ -17,7 +17,16 @@ extern "C" {
 #include "xci.h"
 #include "extkeys.h"
 #include "version.h"
+
 }
+
+// 4NXCI and mbedtls are filled with exit() calls
+// this function overrides them and throws an exception instead
+extern "C" void exit(int value)
+{
+  throw std::runtime_error(std::string("Exception on Exit: ") + char('0' + value));
+}
+
 
 /* 4NXCI by The-4n
    Based on hactool by SciresM
@@ -68,148 +77,173 @@ void RenameNCAs(const xci_ctx_t& xci_ctx)
             RenameNCAs(xci_ctx, addon_nsps[i]);
 }
 
-int ExtractXCI(const std::string& filename, const bool saveNSP)
+bool ExtractXCI(const std::string& filename, const bool saveNSP)
 {
-    nxci_ctx_t tool_ctx;
-    char input_name[0x200];
+	nxci_ctx_t tool_ctx;
+	tool_ctx.file = NULL;
 
-    printf("4NXCI %s by The-4n\n", NXCI_VERSION);
-
-    memset(&tool_ctx, 0, sizeof(tool_ctx));
-    memset(input_name, 0, sizeof(input_name));
-    memset(&application_cnmt, 0, sizeof(cnmt_ctx_t));
-    memset(&patch_cnmt, 0, sizeof(cnmt_ctx_t));
-    memset(&application_cnmt_xml, 0, sizeof(cnmt_xml_ctx_t));
-    memset(&patch_cnmt_xml, 0, sizeof(cnmt_xml_ctx_t));
-    memset(&application_nsp, 0, sizeof(nsp_ctx_t));
-    memset(&patch_nsp, 0, sizeof(nsp_ctx_t));
-    memset(&addons_cnmt_ctx, 0, sizeof(cnmt_addons_ctx_t));
-    memset(&addon_nsps, 0, sizeof(addon_nsps));
-
-    filepath_t keypath;
-
-    filepath_init(&keypath);
-    pki_initialize_keyset(&tool_ctx.settings.keyset, KEYSET_RETAIL);
-
-	// Default keyset filepath
-    filepath_set(&keypath, "/keys.dat");
-
-    // Try to populate default keyfile.
-    FILE *keyfile = NULL;
-    keyfile = os_fopen(keypath.os_path, OS_MODE_READ);
-
-    if (keyfile != NULL)
+    try
     {
-        extkeys_initialize_keyset(&tool_ctx.settings.keyset, keyfile);
-        pki_derive_keys(&tool_ctx.settings.keyset);
-        fclose(keyfile);
-    }
-    else
-    {
-        fprintf(stderr, "Unable to open keyset '%s'\n", keypath.char_path);
-		return 1;
-    }
+        char input_name[0x200];
 
-    // Copy input file
-    strcpy(input_name, filename.c_str());
-    if (!(tool_ctx.file = fopen(input_name, "rb")))
-    {
-        fprintf(stderr, "unable to open %s: %s\n", input_name, strerror(errno));
-		return 1;
-    }
+        printf("4NXCI %s by The-4n\n", NXCI_VERSION);
 
-    xci_ctx_t xci_ctx;
-    memset(&xci_ctx, 0, sizeof(xci_ctx));
-    xci_ctx.file = tool_ctx.file;
-    xci_ctx.tool_ctx = &tool_ctx;
+        memset(&tool_ctx, 0, sizeof(tool_ctx));
+        memset(input_name, 0, sizeof(input_name));
+        memset(&application_cnmt, 0, sizeof(cnmt_ctx_t));
+        memset(&patch_cnmt, 0, sizeof(cnmt_ctx_t));
+        memset(&application_cnmt_xml, 0, sizeof(cnmt_xml_ctx_t));
+        memset(&patch_cnmt_xml, 0, sizeof(cnmt_xml_ctx_t));
+        memset(&application_nsp, 0, sizeof(nsp_ctx_t));
+        memset(&patch_nsp, 0, sizeof(nsp_ctx_t));
+        memset(&addons_cnmt_ctx, 0, sizeof(cnmt_addons_ctx_t));
+        memset(&addon_nsps, 0, sizeof(addon_nsps));
 
-    // secure partition save path to "filename" directory
-    char outputDir[MAX_PATH];
-    GetFileBasename(outputDir, filename.c_str());
-    if(saveNSP)
-    {
-        strcat(outputDir, "Temp");
-    }
-    filepath_init(&xci_ctx.tool_ctx->settings.secure_dir_path);
-    filepath_set(&xci_ctx.tool_ctx->settings.secure_dir_path, outputDir);
+        filepath_t keypath;
 
-    // Clean-up dir if it exists
-    RmDirRecursive(outputDir);
+        filepath_init(&keypath);
+        pki_initialize_keyset(&tool_ctx.settings.keyset, KEYSET_RETAIL);
 
-    printf("\n");
-    progressState = 0; // Extracting
-    xci_process(&xci_ctx);
+        // Default keyset filepath
+        filepath_set(&keypath, "/keys.dat");
 
-    // Output NSP filename
-    char nspFilename[MAX_PATH];
-    GetFileBasename(nspFilename, filename.c_str());
+        // Try to populate default keyfile.
+        FILE *keyfile = NULL;
+        keyfile = os_fopen(keypath.os_path, OS_MODE_READ);
 
-    // Process ncas in cnmts
-    progressState = 1; // Patching
-    printf("===> Processing Application Metadata:\n");
-    cnmt_gamecard_process(xci_ctx.tool_ctx, &application_cnmt_xml, &application_cnmt, &application_nsp, saveNSP, nspFilename);
-    if (patch_cnmt.title_id != 0)
-    {
-        printf("===> Processing Patch Metadata:\n");
-        std::string nspUPDFilename(std::string(nspFilename) + std::string(" [UPD]"));
-        cnmt_download_process(xci_ctx.tool_ctx, &patch_cnmt_xml, &patch_cnmt, &patch_nsp, saveNSP, nspUPDFilename.c_str());
-    }
-    if (addons_cnmt_ctx.count != 0)
-    {
-        addon_nsps = (nsp_ctx_t *)calloc(1, sizeof(nsp_ctx_t) * addons_cnmt_ctx.count);
-        printf("===> Processing %u Addon(s):\n", addons_cnmt_ctx.count);
-        std::string nspDLCFilename(std::string(nspFilename) + std::string(" [DLC]"));
-        for (int i = 0; i < addons_cnmt_ctx.count; i++)
+        if (keyfile != NULL)
         {
-            printf("===> Processing AddOn %i Metadata:\n", i + 1);
-            cnmt_gamecard_process(xci_ctx.tool_ctx, &addons_cnmt_ctx.addon_cnmt_xml[i], &addons_cnmt_ctx.addon_cnmt[i], &addon_nsps[i], saveNSP, nspDLCFilename.c_str());
+            extkeys_initialize_keyset(&tool_ctx.settings.keyset, keyfile);
+            pki_derive_keys(&tool_ctx.settings.keyset);
+            fclose(keyfile);
         }
-    }
+        else
+        {
+            fprintf(stderr, "Unable to open keyset '%s'\n", keypath.char_path);
+            return false;
+        }
 
-    if(saveNSP)
-    {
-        progressState = 2; // Saving NSP
+        // Copy input file
+        strcpy(input_name, filename.c_str());
+        if (!(tool_ctx.file = fopen(input_name, "rb")))
+        {
+            fprintf(stderr, "unable to open %s: %s\n", input_name, strerror(errno));
+            return false;
+        }
 
-        printf("\nSummary:\n");
-        printf("Game NSP: %s\n", application_nsp.filepath.char_path);
+        xci_ctx_t xci_ctx;
+        memset(&xci_ctx, 0, sizeof(xci_ctx));
+        xci_ctx.file = tool_ctx.file;
+        xci_ctx.tool_ctx = &tool_ctx;
+
+        // secure partition save path to "filename" directory
+        char outputDir[MAX_PATH];
+        GetFileBasename(outputDir, filename.c_str());
+        if(saveNSP)
+        {
+            strcat(outputDir, "Temp");
+        }
+        filepath_init(&xci_ctx.tool_ctx->settings.secure_dir_path);
+        filepath_set(&xci_ctx.tool_ctx->settings.secure_dir_path, outputDir);
+
+        // Clean-up dir if it exists
+        RmDirRecursive(outputDir);
+
+        printf("\n");
+        progressState = 0; // Extracting
+        xci_process(&xci_ctx);
+
+        // Output NSP filename
+        char nspFilename[MAX_PATH];
+        GetFileBasename(nspFilename, filename.c_str());
+
+        // Process ncas in cnmts
+        progressState = 1; // Patching
+        printf("===> Processing Application Metadata:\n");
+        cnmt_gamecard_process(xci_ctx.tool_ctx, &application_cnmt_xml, &application_cnmt, &application_nsp, saveNSP, nspFilename);
         if (patch_cnmt.title_id != 0)
-            printf("Update NSP: %s\n", patch_nsp.filepath.char_path);
+        {
+            printf("===> Processing Patch Metadata:\n");
+            std::string nspUPDFilename(std::string(nspFilename) + std::string(" [UPD]"));
+            cnmt_download_process(xci_ctx.tool_ctx, &patch_cnmt_xml, &patch_cnmt, &patch_nsp, saveNSP, nspUPDFilename.c_str());
+        }
         if (addons_cnmt_ctx.count != 0)
         {
-            for (int i2 = 0; i2 < addons_cnmt_ctx.count; i2++)
-                printf("DLC NSP %i: %s\n", i2 + 1, addon_nsps[i2].filepath.char_path);
+            addon_nsps = (nsp_ctx_t *)calloc(1, sizeof(nsp_ctx_t) * addons_cnmt_ctx.count);
+            printf("===> Processing %u Addon(s):\n", addons_cnmt_ctx.count);
+            std::string nspDLCFilename(std::string(nspFilename) + std::string(" [DLC]"));
+            for (int i = 0; i < addons_cnmt_ctx.count; i++)
+            {
+                printf("===> Processing AddOn %i Metadata:\n", i + 1);
+                cnmt_gamecard_process(xci_ctx.tool_ctx, &addons_cnmt_ctx.addon_cnmt_xml[i], &addons_cnmt_ctx.addon_cnmt[i], &addon_nsps[i], saveNSP, nspDLCFilename.c_str());
+            }
         }
-    }
-    fclose(tool_ctx.file);
 
-    printf("\nClean-up:\n");
+        if(saveNSP)
+        {
+            progressState = 2; // Saving NSP
 
-    if(saveNSP)
-    {
-        // Clean-up
-        RmDirRecursive(xci_ctx.tool_ctx->settings.secure_dir_path.char_path);
+            printf("\nSummary:\n");
+            printf("Game NSP: %s\n", application_nsp.filepath.char_path);
+            if (patch_cnmt.title_id != 0)
+                printf("Update NSP: %s\n", patch_nsp.filepath.char_path);
+            if (addons_cnmt_ctx.count != 0)
+            {
+                for (int i2 = 0; i2 < addons_cnmt_ctx.count; i2++)
+                    printf("DLC NSP %i: %s\n", i2 + 1, addon_nsps[i2].filepath.char_path);
+            }
+        }
+        fclose(tool_ctx.file);
+
+        printf("\nClean-up:\n");
+
+        if(saveNSP)
+        {
+            // Clean-up
+            RmDirRecursive(xci_ctx.tool_ctx->settings.secure_dir_path.char_path);
+        }
+        else
+        {
+            // Rename NCAs using NCAids in XML
+            RenameNCAs(xci_ctx);
+        }
+        printf("\n");
+        printf("\nDone!\n");
     }
-    else
+    catch (std::exception& e)
     {
-        // Rename NCAs using NCAids in XML
-        RenameNCAs(xci_ctx);
+        LOG("Failed to process XCI!\n");
+        LOG("%s", e.what());
+
+        if(tool_ctx.file != NULL)
+            fclose(tool_ctx.file);
+
+        return false;
     }
-	printf("\n");
-    printf("\nDone!\n");
-    return 0;
+    return true;
 }
 
-int ConvertXCI(const std::string& filename)
+bool ConvertXCI(const std::string& filename)
 {
     return ExtractXCI(filename, true);
 }
 
-int InstallXCI(const std::string& filename, const FsStorageId destStorageId, const bool ignoreReqFirmVersion, const bool deleteXCI)
+bool InstallXCI(const std::string& filename, const FsStorageId destStorageId, const bool ignoreReqFirmVersion, const bool deleteXCI)
 {
-    // Extract
-    ExtractXCI(filename, false);
+    // Temporary folder
+    char outputDir[MAX_PATH];
+    GetFileBasename(outputDir, filename.c_str());
 
-    // Delete source file if wanted, to avoid using 3 times the space necessary:
+    // 1/ Extract
+    LOG("\nExtracting XCI %s to folder %s...\n", filename.c_str(), outputDir);
+    if(!ExtractXCI(filename, false))
+    {
+        LOG("\nFailed to extract XCI %s...\n", filename.c_str());
+        RmDirRecursive(outputDir);
+        return false;
+    }
+
+    // 2/ Delete source file if wanted, to avoid using 3 times the space necessary:
     // XCI + Extracted NCAs + Installed
     if(deleteXCI)
     {
@@ -218,15 +252,18 @@ int InstallXCI(const std::string& filename, const FsStorageId destStorageId, con
             printf("Error deleting file\n");
     }
 
-    // Install
-    char outputDir[MAX_PATH];
-    GetFileBasename(outputDir, filename.c_str());
+    // 3/ Install
     LOG("\nInstalling folder %s...\n", outputDir);
-    InstallExtracted(std::string(outputDir), destStorageId, ignoreReqFirmVersion);
+    if(!InstallExtracted(std::string(outputDir), destStorageId, ignoreReqFirmVersion))
+    {
+        LOG("\nFailed to install folder %s...\n", outputDir);
+        RmDirRecursive(outputDir);
+        return false;
+    }
 
-    // Clean-up
+    // 4/ Clean-up temp files
     RmDirRecursive(outputDir);
-    return 0;
+    return true;
 }
 
 }

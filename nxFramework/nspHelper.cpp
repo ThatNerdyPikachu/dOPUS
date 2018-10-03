@@ -399,7 +399,7 @@ bool InstallNSP(const std::string& filename, const FsStorageId destStorageId, co
     }
     catch (std::exception& e)
     {
-        LOG("Failed to install NSP!\n");
+        LOG("Install failed!\n");
         LOG("%s", e.what());
         return false;
     }
@@ -516,133 +516,144 @@ bool ExtractNSP_NCAS(const std::string&  filename)
 // numFiles * 0x18 = numFiles * 24 = data_offset (8bytes) + data_size (8bytes) + str_offset (4bytes) + unused (4bytes)
 bool ExtractNSP(const std::string& filename)
 {
-    // Output Path
-    char outputDir[1024];
-    GetFileBasename(outputDir, filename.c_str());
-
-    // Clean-up dir if it exists
-    RmDirRecursive(outputDir);
-    mkdir(outputDir, 0777);
-
-    FILE* NSPfile;
-    if (!(NSPfile = fopen(filename.c_str(), "rb")))
+    FILE* NSPfile = nullptr;
+    try
     {
-        fprintf(stderr, "unable to open %s: %s\n", filename.c_str(), strerror(errno));
-        return false;
-    }
+        // Output Path
+        char outputDir[1024];
+        GetFileBasename(outputDir, filename.c_str());
 
-    // Read NSP header
-    char FOURCC[5];
-    fread(FOURCC, 4, 1, NSPfile);
-    FOURCC[4] = '\0';
-    LOG("Magic = %s\n", FOURCC);
-    if(strcmp(FOURCC, "PFS0") != 0)
-    {
-        fprintf(stderr, "Error: File FOURCC is invalid (expected: PFS0, got: %s)", FOURCC);
-        fclose(NSPfile);
-    }
-    uint fileCount;
-    uint strTableLen;
-    uint padding;
-    fread(&fileCount    , 4, 1, NSPfile);
-    fread(&strTableLen  , 4, 1, NSPfile);
-    fread(&padding      , 4, 1, NSPfile);
-    LOG("Discovered file count: %d\n", fileCount);
+        // Clean-up dir if it exists
+        RmDirRecursive(outputDir);
+        mkdir(outputDir, 0777);
 
-    uint filesMetaBase   = 0x10;
-    uint stringTableBase = filesMetaBase + 0x18 * fileCount;
-
-    // Read file entry table
-    struct FileEntry
-    {
-        uint64_t dataOffset;
-        uint64_t dataSize;
-        uint64_t stringOffset;
-    };
-    std::vector<FileEntry> fileEntries;
-
-    for(uint i = 0 ; i < fileCount ; ++i)
-    {
-        FileEntry entry;
-        fread(&entry.dataOffset     , 8, 1, NSPfile);
-        fread(&entry.dataSize       , 8, 1, NSPfile);
-        fread(&entry.stringOffset   , 8, 1, NSPfile);
-        fileEntries.push_back(entry);
-        LOG("Discovered file entry: dataOffset %" PRIu64 " dataSize %" PRIu64 " stringOffset %" PRIu64 "\n", entry.dataOffset, entry.dataSize, entry.stringOffset);
-    }
-
-    uint64_t bodyBase = ftell(NSPfile) + strTableLen;
-
-    // Read filenames
-    struct FileDesc
-    {
-        uint64_t    absDataOffset;
-        uint64_t    dataSize;
-        std::string fileName;
-    };
-    std::vector<FileDesc> fileDescs;
-    for (struct FileEntry& entry : fileEntries)
-    {
-        fseek(NSPfile, stringTableBase + entry.stringOffset, SEEK_SET);
-
-        char fileEntryName[1024];
-        int i = 0;
-        while(1)
+        if (!(NSPfile = fopen(filename.c_str(), "rb")))
         {
-            fread(fileEntryName + i, 1, 1, NSPfile);
-            if(fileEntryName[i] == 0)
-                break;
-
-            i++;
-        }
-        fileDescs.push_back({bodyBase + entry.dataOffset, entry.dataSize, std::string(fileEntryName)});
-        LOG("Discovered file name: %s\n", fileEntryName);
-    }
-
-    // Extract files
-    for (struct FileDesc& fileDesc : fileDescs)
-    {
-        // Create output file
-        std::string outputFilename = std::string(outputDir) + "/" + fileDesc.fileName;
-        LOG("Creating file: %s\n", outputFilename.c_str());
-        FILE* outfile;
-        if (!(outfile = fopen(outputFilename.c_str(), "wb")))
-        {
-            fprintf(stderr, "unable to open %s: %s\n", outputFilename.c_str(), strerror(errno));
-            fclose(NSPfile);
+            fprintf(stderr, "unable to open %s: %s\n", filename.c_str(), strerror(errno));
             return false;
         }
 
-        // Seek
-        fseek(NSPfile, fileDesc.absDataOffset, SEEK_SET);
-
-        // Write file
-        u64   fileOff  = 0;
-        while (fileOff < fileDesc.dataSize)
+        // Read NSP header
+        char FOURCC[5];
+        fread(FOURCC, 4, 1, NSPfile);
+        FOURCC[4] = '\0';
+        LOG("Magic = %s\n", FOURCC);
+        if(strcmp(FOURCC, "PFS0") != 0)
         {
-            // Read buffer
-            size_t readSize = 0x400000; // 4MB buff
-            auto readBuffer = std::make_unique<u8[]>(readSize);
-            if (readBuffer == NULL)
-                fprintf(stderr, "Failed to allocate read buffer for %s", outputFilename.c_str());
-
-            // Clear the buffer before we read anything, just to be sure
-            progress = (float)fileOff / (float)fileDesc.dataSize;
-
-            if (fileOff % (0x400000 * 3) == 0)
-                LOG("> Progress: %lu/%lu MB (%d%s)\n", (fileOff / 1000000), (fileDesc.dataSize / 1000000), (int)(progress * 100.0), "%");
-
-            if (fileOff + readSize >= fileDesc.dataSize)
-                readSize = fileDesc.dataSize - fileOff;
-
-            fread (readBuffer.get(), readSize, 1, NSPfile);
-            fwrite(readBuffer.get(), readSize, 1, outfile);
-            fileOff += readSize;
+            fprintf(stderr, "Error: File FOURCC is invalid (expected: PFS0, got: %s)", FOURCC);
+            fclose(NSPfile);
+            return false;
         }
-        fclose(outfile);
-        progress = 1.f;
+        uint fileCount;
+        uint strTableLen;
+        uint padding;
+        fread(&fileCount    , 4, 1, NSPfile);
+        fread(&strTableLen  , 4, 1, NSPfile);
+        fread(&padding      , 4, 1, NSPfile);
+        LOG("Discovered file count: %d\n", fileCount);
+
+        uint filesMetaBase   = 0x10;
+        uint stringTableBase = filesMetaBase + 0x18 * fileCount;
+
+        // Read file entry table
+        struct FileEntry
+        {
+            uint64_t dataOffset;
+            uint64_t dataSize;
+            uint64_t stringOffset;
+        };
+        std::vector<FileEntry> fileEntries;
+
+        for(uint i = 0 ; i < fileCount ; ++i)
+        {
+            FileEntry entry;
+            fread(&entry.dataOffset     , 8, 1, NSPfile);
+            fread(&entry.dataSize       , 8, 1, NSPfile);
+            fread(&entry.stringOffset   , 8, 1, NSPfile);
+            fileEntries.push_back(entry);
+            LOG("Discovered file entry: dataOffset %" PRIu64 " dataSize %" PRIu64 " stringOffset %" PRIu64 "\n", entry.dataOffset, entry.dataSize, entry.stringOffset);
+        }
+
+        uint64_t bodyBase = ftell(NSPfile) + strTableLen;
+
+        // Read filenames
+        struct FileDesc
+        {
+            uint64_t    absDataOffset;
+            uint64_t    dataSize;
+            std::string fileName;
+        };
+        std::vector<FileDesc> fileDescs;
+        for (struct FileEntry& entry : fileEntries)
+        {
+            fseek(NSPfile, stringTableBase + entry.stringOffset, SEEK_SET);
+
+            char fileEntryName[1024];
+            int i = 0;
+            while(1)
+            {
+                fread(fileEntryName + i, 1, 1, NSPfile);
+                if(fileEntryName[i] == 0)
+                    break;
+
+                i++;
+            }
+            fileDescs.push_back({bodyBase + entry.dataOffset, entry.dataSize, std::string(fileEntryName)});
+            LOG("Discovered file name: %s\n", fileEntryName);
+        }
+
+        // Extract files
+        for (struct FileDesc& fileDesc : fileDescs)
+        {
+            // Create output file
+            std::string outputFilename = std::string(outputDir) + "/" + fileDesc.fileName;
+            LOG("Creating file: %s\n", outputFilename.c_str());
+            FILE* outfile;
+            if (!(outfile = fopen(outputFilename.c_str(), "wb")))
+            {
+                fprintf(stderr, "unable to open %s: %s\n", outputFilename.c_str(), strerror(errno));
+                fclose(NSPfile);
+                return false;
+            }
+
+            // Seek
+            fseek(NSPfile, fileDesc.absDataOffset, SEEK_SET);
+
+            // Write file
+            u64   fileOff  = 0;
+            while (fileOff < fileDesc.dataSize)
+            {
+                // Read buffer
+                size_t readSize = 0x400000; // 4MB buff
+                auto readBuffer = std::make_unique<u8[]>(readSize);
+                if (readBuffer == NULL)
+                    fprintf(stderr, "Failed to allocate read buffer for %s", outputFilename.c_str());
+
+                // Clear the buffer before we read anything, just to be sure
+                progress = (float)fileOff / (float)fileDesc.dataSize;
+
+                if (fileOff % (0x400000 * 3) == 0)
+                    LOG("> Progress: %lu/%lu MB (%d%s)\n", (fileOff / 1000000), (fileDesc.dataSize / 1000000), (int)(progress * 100.0), "%");
+
+                if (fileOff + readSize >= fileDesc.dataSize)
+                    readSize = fileDesc.dataSize - fileOff;
+
+                fread (readBuffer.get(), readSize, 1, NSPfile);
+                fwrite(readBuffer.get(), readSize, 1, outfile);
+                fileOff += readSize;
+            }
+            fclose(outfile);
+            progress = 1.f;
+        }
+        fclose(NSPfile);
     }
-    fclose(NSPfile);
+    catch (std::exception& e)
+    {
+        LOG("Failed to extract NSP!\n");
+        LOG("%s", e.what());
+        if(NSPfile != nullptr) fclose(NSPfile);
+        return false;
+    }
     return true;
 }
 

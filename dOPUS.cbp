@@ -63,6 +63,7 @@
 		<Unit filename="_debug/cnmt.d" />
 		<Unit filename="_debug/common.d" />
 		<Unit filename="_debug/content_meta.d" />
+		<Unit filename="_debug/dOpus.d" />
 		<Unit filename="_debug/dlgInstall.d" />
 		<Unit filename="_debug/dummy.d" />
 		<Unit filename="_debug/es.d" />
@@ -727,7 +728,6 @@
 		<Unit filename="externals/Tinfoil/include/nx/ipc/ns_ext.h" />
 		<Unit filename="externals/Tinfoil/include/nx/ipc/tin_ipc.h" />
 		<Unit filename="externals/Tinfoil/include/nx/ncm.hpp" />
-		<Unit filename="externals/Tinfoil/include/util/byte_buffer.hpp" />
 		<Unit filename="externals/Tinfoil/include/util/title_util.hpp" />
 		<Unit filename="externals/Tinfoil/source/data/byte_buffer.cpp" />
 		<Unit filename="externals/Tinfoil/source/install/simple_filesystem.cpp" />
@@ -743,7 +743,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="externals/Tinfoil/source/nx/ncm.cpp" />
-		<Unit filename="externals/Tinfoil/source/util/byte_buffer.cpp" />
 		<Unit filename="externals/Tinfoil/source/util/title_util.cpp" />
 		<Unit filename="nxFramework/SDL/SDLHelper.cpp" />
 		<Unit filename="nxFramework/SDL/SDLHelper.h" />
@@ -761,8 +760,8 @@
 		<Unit filename="nxFramework/nxUtils.h" />
 		<Unit filename="nxFramework/xciHelper.cpp" />
 		<Unit filename="nxFramework/xciHelper.h" />
-		<Unit filename="source/appInstaller.cpp" />
-		<Unit filename="source/appInstaller.h" />
+		<Unit filename="source/dOpus.cpp" />
+		<Unit filename="source/dOpus.h" />
 		<Unit filename="source/dlgInstall.cpp" />
 		<Unit filename="source/dlgInstall.h" />
 		<Unit filename="source/gui.cpp" />

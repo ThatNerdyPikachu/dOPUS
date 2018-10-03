@@ -5,10 +5,10 @@
 namespace NXFramework
 {
 
-int ExtractXCI( const std::string&  filename,
+bool ExtractXCI( const std::string&  filename,
                 const bool          saveNSP              = false);
-int ConvertXCI( const std::string&  filename);
-int InstallXCI( const std::string&  filename,
+bool ConvertXCI( const std::string&  filename);
+bool InstallXCI( const std::string&  filename,
                 const FsStorageId   destStorageId        = FsStorageId_SdCard,
                 const bool          ignoreReqFirmVersion = true,
                 const bool          deleteXCI            = false);
