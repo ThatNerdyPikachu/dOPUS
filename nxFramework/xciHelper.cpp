@@ -2,8 +2,16 @@
 #include "nspHelper.h"
 #include "filehelper.h"
 
-extern "C" {
 #undef exit
+
+// 4NXCI and mbedtls are filled with exit() calls
+// this function overrides them and throws an exception instead
+extern "C" void exit(int value)
+{
+  throw std::runtime_error(std::string("Exception on Exit: ") + char('0' + value));
+}
+
+extern "C" {
 #include <getopt.h>
 #include <errno.h>
 #include <stdio.h>
@@ -19,13 +27,6 @@ extern "C" {
 #include "extkeys.h"
 #include "version.h"
 
-}
-
-// 4NXCI and mbedtls are filled with exit() calls
-// this function overrides them and throws an exception instead
-extern "C" void exit(int value)
-{
-  throw std::runtime_error(std::string("Exception on Exit: ") + char('0' + value));
 }
 
 
