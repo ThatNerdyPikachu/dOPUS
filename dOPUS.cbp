@@ -718,6 +718,7 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="externals/4NXCI/xci.h" />
+		<Unit filename="externals/Tinfoil/include/data/byte_buffer.hpp" />
 		<Unit filename="externals/Tinfoil/include/install/simple_filesystem.hpp" />
 		<Unit filename="externals/Tinfoil/include/nx/content_meta.hpp" />
 		<Unit filename="externals/Tinfoil/include/nx/fs.hpp" />
@@ -728,6 +729,7 @@
 		<Unit filename="externals/Tinfoil/include/nx/ncm.hpp" />
 		<Unit filename="externals/Tinfoil/include/util/byte_buffer.hpp" />
 		<Unit filename="externals/Tinfoil/include/util/title_util.hpp" />
+		<Unit filename="externals/Tinfoil/source/data/byte_buffer.cpp" />
 		<Unit filename="externals/Tinfoil/source/install/simple_filesystem.cpp" />
 		<Unit filename="externals/Tinfoil/source/nx/content_meta.cpp" />
 		<Unit filename="externals/Tinfoil/source/nx/fs.cpp" />
