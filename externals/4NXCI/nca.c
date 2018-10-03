@@ -11,6 +11,8 @@
 #include "extkeys.h"
 #include "filepath.h"
 
+extern float progress;
+
 /* Initialize the context. */
 void nca_init(nca_ctx_t *ctx)
 {
@@ -468,7 +470,7 @@ void nca_saved_meta_process(nca_ctx_t *ctx, filepath_t *filepath)
     }
 }
 
-void nca_gamecard_process(nca_ctx_t *ctx, filepath_t *filepath, int index, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_ctx_t *cnmt_ctx, nsp_ctx_t *nsp_ctx, float* progress)
+void nca_gamecard_process(nca_ctx_t *ctx, filepath_t *filepath, int index, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_ctx_t *cnmt_ctx, nsp_ctx_t *nsp_ctx)
 {
     /* Decrypt header */
     if (!nca_decrypt_header(ctx))
@@ -525,17 +527,16 @@ void nca_gamecard_process(nca_ctx_t *ctx, filepath_t *filepath, int index, cnmt_
     uint64_t ofs = 0;
     uint64_t filesize = nca_size;
 
-    float debugProgress = 0;
+    progress = 0;
     uint64_t readBytes = 0;
     uint64_t sizeToRead = filesize-ofs;
 
     while (ofs < filesize)
     {
-        debugProgress = (float)readBytes / (float)sizeToRead;
-        if(progress != NULL) *progress = debugProgress;
+        progress = (float)readBytes / (float)sizeToRead;
 
         if (readBytes % (0x400000 * 3) == 0)
-            printf("> Patching Progress: %lu/%lu MB (%d%s)\n", (readBytes / 1000000), (sizeToRead / 1000000), (int)(debugProgress * 100.0), "%");
+            printf("> Patching Progress: %lu/%lu MB (%d%s)\n", (readBytes / 1000000), (sizeToRead / 1000000), (int)(progress * 100.0), "%");
 
         if (ofs + read_size >= filesize)
             read_size = filesize - ofs;
@@ -548,7 +549,7 @@ void nca_gamecard_process(nca_ctx_t *ctx, filepath_t *filepath, int index, cnmt_
         ofs += read_size;
         readBytes += read_size;
     }
-    if(progress != NULL) *progress = 1.f;
+    progress = 1.f;
     fclose(ctx->file);
     free(buf);
     unsigned char *hash_result = (unsigned char *)calloc(1, 32);

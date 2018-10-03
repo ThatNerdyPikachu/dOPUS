@@ -7,6 +7,8 @@
 #include "cnmt.h"
 #include "dummy.h"
 
+extern int progressState;
+
 /* Create .cnmt.xml
  The process is done without xml libs cause i don't want to add more dependency for now
   */
@@ -57,7 +59,7 @@ void cnmt_create_xml(cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_ctx_t *cnmt_ctx, nsp_ctx
     fclose(file);
 }
 
-void cnmt_gamecard_process(nxci_ctx_t *tool, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_ctx_t *cnmt_ctx, nsp_ctx_t *nsp_ctx, bool nspCreate, const char* outputFilename, float* progress)
+void cnmt_gamecard_process(nxci_ctx_t *tool, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_ctx_t *cnmt_ctx, nsp_ctx_t *nsp_ctx, bool nspCreate, const char* outputFilename)
 {
     cnmt_ctx->has_rightsid = 0;
 
@@ -110,9 +112,9 @@ void cnmt_gamecard_process(nxci_ctx_t *tool, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_
         if (!(nca_ctx.file = os_fopen(filepath.os_path, OS_MODE_EDIT)))
         {
             fprintf(stderr, "unable to open %s: %s\n", filepath.char_path, strerror(errno));
-			exit(EXIT_FAILURE);
+            exit(EXIT_FAILURE);
         }
-        nca_gamecard_process(&nca_ctx, &filepath, index, cnmt_xml_ctx, cnmt_ctx, nsp_ctx, progress);
+        nca_gamecard_process(&nca_ctx, &filepath, index, cnmt_xml_ctx, cnmt_ctx, nsp_ctx);
         nca_free_section_contexts(&nca_ctx);
 		fclose(nca_ctx.file);
     }
@@ -123,9 +125,9 @@ void cnmt_gamecard_process(nxci_ctx_t *tool, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_
     if (!(nca_ctx.file = os_fopen(cnmt_ctx->meta_filepath.os_path, OS_MODE_EDIT)))
     {
         fprintf(stderr, "unable to open %s: %s\n", cnmt_ctx->meta_filepath.char_path, strerror(errno));
-		exit(EXIT_FAILURE);
+        exit(EXIT_FAILURE);
     }
-    nca_gamecard_process(&nca_ctx, &cnmt_ctx->meta_filepath, cnmt_ctx->nca_count, cnmt_xml_ctx, cnmt_ctx, nsp_ctx, progress);
+    nca_gamecard_process(&nca_ctx, &cnmt_ctx->meta_filepath, cnmt_ctx->nca_count, cnmt_xml_ctx, cnmt_ctx, nsp_ctx);
     nca_free_section_contexts(&nca_ctx);
 	fclose(nca_ctx.file);
 
@@ -159,10 +161,13 @@ void cnmt_gamecard_process(nxci_ctx_t *tool, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_
     }
     printf("\n");
     if(nspCreate)
-        nsp_create(nsp_ctx, progress);
+    {
+        progressState = 2; // Saving NSP
+        nsp_create(nsp_ctx);
+    }
 }
 
-void cnmt_download_process(nxci_ctx_t *tool, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_ctx_t *cnmt_ctx, nsp_ctx_t *nsp_ctx, bool nspCreate, const char* outputFilename, float* progress)
+void cnmt_download_process(nxci_ctx_t *tool, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_ctx_t *cnmt_ctx, nsp_ctx_t *nsp_ctx, bool nspCreate, const char* outputFilename)
 {
     cnmt_ctx->has_rightsid = 0;
 
@@ -235,7 +240,7 @@ void cnmt_download_process(nxci_ctx_t *tool, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_
         exit(EXIT_FAILURE);
     }
     nca_download_process(&nca_ctx, &cnmt_ctx->meta_filepath, cnmt_ctx->nca_count, cnmt_xml_ctx, cnmt_ctx, nsp_ctx);
-	nca_free_section_contexts(&nca_ctx);
+    nca_free_section_contexts(&nca_ctx);
     fclose(nca_ctx.file);
 
     filepath_t tik_filepath;
@@ -274,7 +279,10 @@ void cnmt_download_process(nxci_ctx_t *tool, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_
     }
     printf("\n");
     if(nspCreate)
-        nsp_create(nsp_ctx, progress);
+    {
+        progressState = 2; // Saving NSP
+        nsp_create(nsp_ctx);
+    }
 }
 
 char *cnmt_get_title_type(cnmt_ctx_t *cnmt_ctx)

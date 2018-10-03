@@ -18,7 +18,6 @@ namespace
         std::string filename;
         FsStorageId destStorageId;
         bool        ignoreReqFirmVersion;
-        float*      progress;
         bool*       running;
         bool        deleteSourceFile;
     };
@@ -26,6 +25,9 @@ namespace
     ProcessThreadArgs   processThreadArgs;
     bool                threadRunning = false;
 }
+
+float progress        = 0.f;
+int   progressState   = 0;
 
 
 int InstallThread(void* in)
@@ -35,7 +37,7 @@ int InstallThread(void* in)
     LOG("Installing %s...\n", filePath.c_str());
     if(strncasecmp(GetFileExt(args->filename.c_str()), "nsp", 3) == 0)
     {
-        InstallNSP(filePath, args->destStorageId, args->ignoreReqFirmVersion, false, args->progress);
+        InstallNSP(filePath, args->destStorageId, args->ignoreReqFirmVersion, false);
         if(args->deleteSourceFile)
         {
             LOG("Deleting file %s...\n", filePath.c_str());
@@ -46,7 +48,7 @@ int InstallThread(void* in)
     else
     if(strncasecmp(GetFileExt(args->filename.c_str()), "xci", 3) == 0)
     {
-        InstallXCI(filePath, args->destStorageId, args->ignoreReqFirmVersion, args->deleteSourceFile, args->progress);
+        InstallXCI(filePath, args->destStorageId, args->ignoreReqFirmVersion, args->deleteSourceFile);
     }
     *(args->running) = false;
     return 0;
@@ -57,7 +59,7 @@ int InstallExtractedThread(void* in)
     ProcessThreadArgs* args = reinterpret_cast<ProcessThreadArgs*>(in);
     std::string filePath = args->filedir + args->filename;
     LOG("Installing folder %s...\n", filePath.c_str());
-    InstallExtracted(filePath, args->destStorageId, args->ignoreReqFirmVersion, args->progress);
+    InstallExtracted(filePath, args->destStorageId, args->ignoreReqFirmVersion);
     *(args->running) = false;
     return 0;
 }
@@ -69,12 +71,12 @@ int ExtractThread(void* in)
     LOG("\nExtracting %s...:)\n", filePath.c_str());
     if(strncasecmp(GetFileExt(args->filename.c_str()), "nsp", 3) == 0)
     {
-        ExtractNSP(filePath, args->progress);
+        ExtractNSP(filePath);
     }
     else
     if(strncasecmp(GetFileExt(args->filename.c_str()), "xci", 3) == 0)
     {
-        ExtractXCI(filePath, false, args->progress);
+        ExtractXCI(filePath, false);
     }
     *(args->running) = false;
     return 0;
@@ -87,7 +89,7 @@ int ConvertThread(void* in)
     LOG("\n Converting %s...:)\n", filePath.c_str());
     if(strncasecmp(GetFileExt(args->filename.c_str()), "xci", 3) == 0)
     {
-        ConvertXCI(filePath, args->progress);
+        ConvertXCI(filePath);
     }
     *(args->running) = false;
     return 0;
@@ -179,12 +181,12 @@ void DLGInstall::Update(const double timer, const u64 kDown)
             {
                 if(dlgMode == DLG_INSTALL || dlgMode == DLG_INSTALL_DELETE)
                 {
-                    // Make sure there is no processThread in flight
+                    progress                                 = 0.f;
+                    progressState                            = 0;
                     processThreadArgs.filedir                = filedir;
                     processThreadArgs.filename               = filename;
                     processThreadArgs.destStorageId          = destStorageId;
                     processThreadArgs.ignoreReqFirmVersion   = true;
-                    processThreadArgs.progress               = &progress;
                     processThreadArgs.running                = &threadRunning;
                     processThreadArgs.deleteSourceFile       = (dlgMode == DLG_INSTALL_DELETE);
                     threadRunning                            = true;
@@ -195,13 +197,13 @@ void DLGInstall::Update(const double timer, const u64 kDown)
                 else
                 if(dlgMode == DLG_INSTALL_EXTRACTED)
                 {
-                    // Make sure there is no processThread in flight
+                    progress                                 = 0.f;
+                    progressState                            = 0;
                     processThreadArgs.filedir                = filedir;
                     processThreadArgs.filename               = filename;
                     processThreadArgs.destStorageId          = destStorageId;
                     processThreadArgs.ignoreReqFirmVersion   = true;
                     processThreadArgs.deleteSourceFile       = false;
-                    processThreadArgs.progress               = &progress;
                     processThreadArgs.running                = &threadRunning;
                     threadRunning                            = true;
                     LOG("Installing folder %s to %s...\n", filePath.c_str(), destStorageId==FsStorageId_SdCard?"SD Card":"Nand");
@@ -211,11 +213,11 @@ void DLGInstall::Update(const double timer, const u64 kDown)
                 else
                 if(dlgMode == DLG_EXTRACT)
                 {
-                    // Make sure there is no processThread in flight
+                    progress                                 = 0.f;
+                    progressState                            = 0;
                     processThreadArgs.filedir                = filedir;
                     processThreadArgs.filename               = filename;
                     processThreadArgs.deleteSourceFile       = false;
-                    processThreadArgs.progress               = &progress;
                     processThreadArgs.running                = &threadRunning;
                     threadRunning                            = true;
                     LOG("Extracting %s...\n", filePath.c_str());
@@ -224,11 +226,11 @@ void DLGInstall::Update(const double timer, const u64 kDown)
                 }
                 if(dlgMode == DLG_CONVERT)
                 {
-                    // Make sure there is no processThread in flight
+                    progress                                 = 0.f;
+                    progressState                            = 0;
                     processThreadArgs.filedir                = filedir;
                     processThreadArgs.filename               = filename;
                     processThreadArgs.deleteSourceFile       = false;
-                    processThreadArgs.progress               = &progress;
                     processThreadArgs.running                = &threadRunning;
                     threadRunning                            = true;
                     LOG("Extracting %s...\n", filePath.c_str());
@@ -259,22 +261,51 @@ void DLGInstall::Update(const double timer, const u64 kDown)
 
 void DLGInstall::Render(const double timer)
 {
+    const char* fileExt = GetFileExt(filename.c_str());
+    bool isXCI = (strncasecmp(fileExt, "xci", 3) == 0);
+
     std::string message;
   	switch(dlgState)
 	{
 		case DLG_PROGRESS:
+		    // Extract
             if(dlgMode == DLG_EXTRACT)
-                message = "Extracting...";
+            {
+                if(!isXCI || progressState == 0)
+                    message = "Extracting NCAs...";
+                else
+                if(isXCI && progressState == 1)
+                    message = "Patching NCAs...";
+            }
+            // Install
             else
             if(dlgMode == DLG_INSTALL           ||
                dlgMode == DLG_INSTALL_EXTRACTED ||
                dlgMode == DLG_INSTALL_DELETE)
-                message = std::string("Installing to ") +
-                    (destStorageId==FsStorageId_SdCard?
-                     std::string("SD Card"):std::string("Nand")) +
-                     std::string("...");
+            {
+                if(!isXCI || progressState == 2)
+                    message = std::string("Installing to ") +
+                        (destStorageId==FsStorageId_SdCard?
+                        std::string("SD Card"):std::string("Nand")) +
+                        std::string("...");
+                else
+                if(isXCI && progressState == 0)
+                    message = "Extracting NCAs...";
+                else
+                if(isXCI && progressState == 1)
+                    message = "Patching NCAs...";
+            }
+            // Convert
             else
-                message = "Converting...";
+            {
+                if(progressState == 0)
+                    message = "Extracting NCAs...";
+                else
+                if(progressState == 1)
+                    message = "Patching NCAs...";
+                else
+                    message = "Saving NSP...";
+            }
         break;
 		case DLG_DONE:
             message = "Done!";
@@ -343,13 +374,13 @@ void DLGInstall::Render(const double timer)
            dlgMode == DLG_INSTALL_EXTRACTED)
         {
             int txt_height = 0;
-	    int txt_width  = 0;
+	        int txt_width  = 0;
             TTF_SizeText(rootGui->FontHandle(GUI::Roboto), "SD Card", &txt_width, &txt_height);
             SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto),
                           190+350, 375-txt_height,
                           (destStorageId == FsStorageId_SdCard)  ?CYAN:DARK_GREY, "SD Card");
 
-	    TTF_SizeText(rootGui->FontHandle(GUI::Roboto), "Nand", &txt_width, &txt_height);
+            TTF_SizeText(rootGui->FontHandle(GUI::Roboto), "Nand", &txt_width, &txt_height);
             SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto),
                           190+900-350-txt_width, 375-txt_height,
                           (destStorageId == FsStorageId_NandUser)?CYAN:DARK_GREY, "Nand");

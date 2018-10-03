@@ -1,19 +1,16 @@
 #pragma once
 #include <string>
-#include <Tinfoil/include/nx/content_meta.hpp>
+#include <switch.h>
 
 namespace NXFramework
 {
 
 int ExtractXCI( const std::string&  filename,
-                const bool          saveNSP              = false,
-                float*              progress             = nullptr);
-int ConvertXCI( const std::string&  filename,
-                float*              progress             = nullptr);
+                const bool          saveNSP              = false);
+int ConvertXCI( const std::string&  filename);
 int InstallXCI( const std::string&  filename,
                 const FsStorageId   destStorageId        = FsStorageId_SdCard,
                 const bool          ignoreReqFirmVersion = true,
-                const bool          deleteXCI            = false,
-                float*              progress             = nullptr);
+                const bool          deleteXCI            = false);
 
 }

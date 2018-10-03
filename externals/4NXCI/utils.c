@@ -9,6 +9,8 @@
 #include "filepath.h"
 #include "sha.h"
 
+extern float progress;
+
 uint32_t align(uint32_t offset, uint32_t alignment) {
     uint32_t mask = ~(alignment-1);
 
@@ -61,9 +63,9 @@ void save_buffer_to_file(void *buf, uint64_t size, struct filepath *filepath) {
         fprintf(stderr, "Failed to open %s!\n", filepath->char_path);
         return;
     }
-
+    
     fwrite(buf, 1, size, f_out);
-
+    
     fclose(f_out);
 }
 
@@ -79,7 +81,7 @@ void save_buffer_to_directory_file(void *buf, uint64_t size, struct filepath *di
     }
 }
 
-void save_file_section(FILE *f_in, uint64_t ofs, uint64_t total_size, filepath_t *filepath, float* progress) {
+void save_file_section(FILE *f_in, uint64_t ofs, uint64_t total_size, filepath_t *filepath) {
     FILE *f_out = os_fopen(filepath->os_path, OS_MODE_WRITE);
 
     if (f_out == NULL) {
@@ -97,16 +99,15 @@ void save_file_section(FILE *f_in, uint64_t ofs, uint64_t total_size, filepath_t
     uint64_t end_ofs = ofs + total_size;
     fseeko64(f_in, ofs, SEEK_SET);
 
-    float debugProgress = 0;
+    progress = 0;
     uint64_t readBytes = 0;
     uint64_t sizeToRead = end_ofs-ofs;
 
     while (ofs < end_ofs) {
-        debugProgress = (float)readBytes / (float)sizeToRead;
-        if(progress != NULL) *progress = debugProgress;
+        progress = (float)readBytes / (float)sizeToRead;
 
         if (readBytes % (0x400000 * 3) == 0)
-            printf("> Saving Progress: %lu/%lu MB (%d%s)\n", (readBytes / 1000000), (sizeToRead / 1000000), (int)(debugProgress * 100.0), "%");
+            printf("> Saving Progress: %lu/%lu MB (%d%s)\n", (readBytes / 1000000), (sizeToRead / 1000000), (int)(progress * 100.0), "%");
 
         if (ofs + read_size >= end_ofs) read_size = end_ofs - ofs;
         if (fread(buf, 1, read_size, f_in) != read_size) {
@@ -117,7 +118,7 @@ void save_file_section(FILE *f_in, uint64_t ofs, uint64_t total_size, filepath_t
         ofs += read_size;
         readBytes += read_size;
     }
-    if(progress != NULL) *progress = 1.f;
+    progress = 1.f;
 
     fclose(f_out);
 
@@ -146,11 +147,11 @@ validity_t check_memory_hash_table(FILE *f_in, unsigned char *hash_table, uint64
             memset(block, 0, read_size);
             read_size = data_len - ofs;
         }
-
+        
         if (fread(block, 1, read_size, f_in) != read_size) {
             fprintf(stderr, "Failed to read file!\n");
             exit(EXIT_FAILURE);
-        }
+        }        
         sha256_hash_buffer(cur_hash, block, full_block ? block_size : read_size);
         if (memcmp(cur_hash, cur_hash_table_entry, 0x20) != 0) {
             result = VALIDITY_INVALID;
@@ -168,7 +169,7 @@ validity_t check_file_hash_table(FILE *f_in, uint64_t hash_ofs, uint64_t data_of
     if (block_size == 0) {
         /* Block size of 0 is always invalid. */
         return VALIDITY_INVALID;
-    }
+    }    
     uint64_t hash_table_size = data_len / block_size;
     if (data_len % block_size) hash_table_size++;
     hash_table_size *= 0x20;
@@ -227,7 +228,7 @@ FILE *open_key_file(const char *prefix) {
     if (keyfile == NULL && keypath.valid == VALIDITY_VALID) {
         keyfile = os_fopen(keypath.os_path, OS_MODE_READ);
     }
-
+    
     return keyfile;
 }
 

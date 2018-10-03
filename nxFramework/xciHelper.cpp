@@ -34,6 +34,8 @@ nsp_ctx_t *addon_nsps;
 cnmt_addons_ctx_t addons_cnmt_ctx;
 
 
+extern int progressState;
+
 namespace NXFramework
 {
 
@@ -66,7 +68,7 @@ void RenameNCAs(const xci_ctx_t& xci_ctx)
             RenameNCAs(xci_ctx, addon_nsps[i]);
 }
 
-int ExtractXCI(const std::string& filename, const bool saveNSP, float* progress)
+int ExtractXCI(const std::string& filename, const bool saveNSP)
 {
     nxci_ctx_t tool_ctx;
     char input_name[0x200];
@@ -135,21 +137,22 @@ int ExtractXCI(const std::string& filename, const bool saveNSP, float* progress)
     RmDirRecursive(outputDir);
 
     printf("\n");
-
-    xci_process(&xci_ctx, progress);
+    progressState = 0; // Extracting
+    xci_process(&xci_ctx);
 
     // Output NSP filename
     char nspFilename[MAX_PATH];
     GetFileBasename(nspFilename, filename.c_str());
 
     // Process ncas in cnmts
+    progressState = 1; // Patching
     printf("===> Processing Application Metadata:\n");
-    cnmt_gamecard_process(xci_ctx.tool_ctx, &application_cnmt_xml, &application_cnmt, &application_nsp, saveNSP, nspFilename, progress);
+    cnmt_gamecard_process(xci_ctx.tool_ctx, &application_cnmt_xml, &application_cnmt, &application_nsp, saveNSP, nspFilename);
     if (patch_cnmt.title_id != 0)
     {
         printf("===> Processing Patch Metadata:\n");
         std::string nspUPDFilename(std::string(nspFilename) + std::string(" [UPD]"));
-        cnmt_download_process(xci_ctx.tool_ctx, &patch_cnmt_xml, &patch_cnmt, &patch_nsp, saveNSP, nspUPDFilename.c_str(), progress);
+        cnmt_download_process(xci_ctx.tool_ctx, &patch_cnmt_xml, &patch_cnmt, &patch_nsp, saveNSP, nspUPDFilename.c_str());
     }
     if (addons_cnmt_ctx.count != 0)
     {
@@ -159,12 +162,14 @@ int ExtractXCI(const std::string& filename, const bool saveNSP, float* progress)
         for (int i = 0; i < addons_cnmt_ctx.count; i++)
         {
             printf("===> Processing AddOn %i Metadata:\n", i + 1);
-            cnmt_gamecard_process(xci_ctx.tool_ctx, &addons_cnmt_ctx.addon_cnmt_xml[i], &addons_cnmt_ctx.addon_cnmt[i], &addon_nsps[i], saveNSP, nspDLCFilename.c_str(), progress);
+            cnmt_gamecard_process(xci_ctx.tool_ctx, &addons_cnmt_ctx.addon_cnmt_xml[i], &addons_cnmt_ctx.addon_cnmt[i], &addon_nsps[i], saveNSP, nspDLCFilename.c_str());
         }
     }
 
     if(saveNSP)
     {
+        progressState = 2; // Saving NSP
+
         printf("\nSummary:\n");
         printf("Game NSP: %s\n", application_nsp.filepath.char_path);
         if (patch_cnmt.title_id != 0)
@@ -194,15 +199,15 @@ int ExtractXCI(const std::string& filename, const bool saveNSP, float* progress)
     return 0;
 }
 
-int ConvertXCI(const std::string& filename, float* progress)
+int ConvertXCI(const std::string& filename)
 {
-    return ExtractXCI(filename, true, progress);
+    return ExtractXCI(filename, true);
 }
 
-int InstallXCI(const std::string& filename, const FsStorageId destStorageId, const bool ignoreReqFirmVersion, const bool deleteXCI, float* progress)
+int InstallXCI(const std::string& filename, const FsStorageId destStorageId, const bool ignoreReqFirmVersion, const bool deleteXCI)
 {
     // Extract
-    ExtractXCI(filename, false, progress);
+    ExtractXCI(filename, false);
 
     // Delete source file if wanted, to avoid using 3 times the space necessary:
     // XCI + Extracted NCAs + Installed
@@ -217,7 +222,7 @@ int InstallXCI(const std::string& filename, const FsStorageId destStorageId, con
     char outputDir[MAX_PATH];
     GetFileBasename(outputDir, filename.c_str());
     LOG("\nInstalling folder %s...\n", outputDir);
-    InstallExtracted(std::string(outputDir), destStorageId, ignoreReqFirmVersion, progress);
+    InstallExtracted(std::string(outputDir), destStorageId, ignoreReqFirmVersion);
 
     // Clean-up
     RmDirRecursive(outputDir);

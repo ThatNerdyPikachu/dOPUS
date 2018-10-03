@@ -52,6 +52,7 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
+		<Unit filename="Makefile" />
 		<Unit filename="_debug/ConvertUTF.d" />
 		<Unit filename="_debug/SDLHelper.d" />
 		<Unit filename="_debug/SDLRender.d" />

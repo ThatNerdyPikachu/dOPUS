@@ -1,12 +1,12 @@
-#include "util/byte_buffer.hpp"
+#include "data/byte_buffer.hpp"
 
 #include <common.h>
 
-namespace tin::util
+namespace tin::data
 {
     ByteBuffer::ByteBuffer(size_t reserveSize)
     {
-        m_buffer.reserve(reserveSize);
+        m_buffer.resize(reserveSize);
     }
 
     size_t ByteBuffer::GetSize()

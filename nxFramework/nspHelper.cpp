@@ -10,6 +10,8 @@
 
 using namespace tin::install::nsp;
 
+extern float progress;
+
 namespace NXFramework
 {
 
@@ -142,7 +144,7 @@ nx::ncm::ContentMeta GetContentMetaFromNCA(std::string& ncaPath)
     auto cnmtFile = cnmtNCASimpleFileSystem.OpenFile(cnmtName);
     u64 cnmtSize  = cnmtFile.GetSize();
 
-    tin::util::ByteBuffer cnmtBuf;
+    tin::data::ByteBuffer cnmtBuf;
     cnmtBuf.Resize(cnmtSize);
     cnmtFile.Read(0x0, cnmtBuf.GetData(), cnmtSize);
 
@@ -175,7 +177,7 @@ void InstallTicketCert(SimpleFileSystem& simpleFS)
     ASSERT_OK(esImportTicket(tikBuf.get(), tikSize, certBuf.get(), certSize), "Failed to import ticket\n");
 }
 
-void InstallContentMetaRecords(tin::util::ByteBuffer&     installContentMetaBuf,
+void InstallContentMetaRecords(tin::data::ByteBuffer&     installContentMetaBuf,
                                nx::ncm::ContentMeta&      contentMeta,
                                const FsStorageId          destStorageId)
 {
@@ -245,7 +247,7 @@ void InstallApplicationRecord(nx::ncm::ContentMeta& contentMeta, const FsStorage
     ASSERT_OK(nsPushApplicationRecord(baseTitleId, 0x3, storageRecords.data(), storageRecords.size() * sizeof(ContentStorageRecord)), "Failed to push application record\n");
 }
 
-void InstallNCA(SimpleFileSystem& simpleFS, const NcmNcaId& ncaId, const FsStorageId destStorageId, float* progress = nullptr)
+void InstallNCA(SimpleFileSystem& simpleFS, const NcmNcaId& ncaId, const FsStorageId destStorageId)
 {
     std::string ncaName = tin::util::GetNcaIdString(ncaId);
 
@@ -283,16 +285,13 @@ void InstallNCA(SimpleFileSystem& simpleFS, const NcmNcaId& ncaId, const FsStora
     LOG("Size: 0x%lx\n", ncaSize);
     contentStorage.CreatePlaceholder(ncaId, ncaId, ncaSize);
 
-    float debugProgress = 0;
-
     while (fileOff < ncaSize)
     {
         // Clear the buffer before we read anything, just to be sure
-        debugProgress = (float)fileOff / (float)ncaSize;
-        if(progress != nullptr) *progress = debugProgress;
+        progress = (float)fileOff / (float)ncaSize;
 
         if (fileOff % (0x400000 * 3) == 0)
-            LOG("> Progress: %lu/%lu MB (%d%s)\n", (fileOff / 1000000), (ncaSize / 1000000), (int)(debugProgress * 100.0), "%");
+            LOG("> Progress: %lu/%lu MB (%d%s)\n", (fileOff / 1000000), (ncaSize / 1000000), (int)(progress * 100.0), "%");
 
         if (fileOff + readSize >= ncaSize)
             readSize = ncaSize - fileOff;
@@ -301,7 +300,7 @@ void InstallNCA(SimpleFileSystem& simpleFS, const NcmNcaId& ncaId, const FsStora
         contentStorage.WritePlaceholder(ncaId, fileOff, readBuffer.get(), readSize);
         fileOff += readSize;
     }
-    if(progress != nullptr) *progress = 1.f;
+    progress = 1.f;
 
     // Clean up the line for whatever comes next
     LOG("                                                           \n");
@@ -322,7 +321,7 @@ void InstallNCA(SimpleFileSystem& simpleFS, const NcmNcaId& ncaId, const FsStora
     catch (...) {}
 }
 
-bool InstallNSP(const std::string& filename, const FsStorageId destStorageId, const bool ignoreReqFirmVersion, const bool isFolder, float* progress)
+bool InstallNSP(const std::string& filename, const FsStorageId destStorageId, const bool ignoreReqFirmVersion, const bool isFolder)
 {
     try
     {
@@ -345,7 +344,7 @@ bool InstallNSP(const std::string& filename, const FsStorageId destStorageId, co
         LOG("                    \n");
         LOG("Preparing install...\n");
 
-        tin::util::ByteBuffer cnmtBuf;
+        tin::data::ByteBuffer cnmtBuf;
         auto cnmtTuple = ReadCNMT(simpleFS);
         nx::ncm::ContentMeta    contentMeta       = std::get<0>(cnmtTuple);
         nx::ncm::ContentRecord  cnmtContentRecord = std::get<1>(cnmtTuple);
@@ -353,7 +352,7 @@ bool InstallNSP(const std::string& filename, const FsStorageId destStorageId, co
         if (!contentStorage.Has(cnmtContentRecord.ncaId))
         {
             LOG("Installing CNMT NCA...\n");
-            InstallNCA(simpleFS, cnmtContentRecord.ncaId, destStorageId, progress);
+            InstallNCA(simpleFS, cnmtContentRecord.ncaId, destStorageId);
         }
         else
         {
@@ -364,7 +363,7 @@ bool InstallNSP(const std::string& filename, const FsStorageId destStorageId, co
         if (ignoreReqFirmVersion)
             LOG("WARNING: Required system firmware version is being IGNORED!\n");
 
-        tin::util::ByteBuffer installContentMetaBuf;
+        tin::data::ByteBuffer installContentMetaBuf;
         contentMeta.GetInstallContentMeta(installContentMetaBuf, cnmtContentRecord, ignoreReqFirmVersion);
 
         InstallContentMetaRecords(installContentMetaBuf, contentMeta, destStorageId);
@@ -392,7 +391,7 @@ bool InstallNSP(const std::string& filename, const FsStorageId destStorageId, co
         for (auto& record : contentMeta.GetContentRecords())
         {
             LOG("Installing from %s\n", tin::util::GetNcaIdString(record.ncaId).c_str());
-            InstallNCA(simpleFS, record.ncaId, destStorageId, progress);
+            InstallNCA(simpleFS, record.ncaId, destStorageId);
         }
         LOG("                    \n");
         LOG("Post Install Records: \n");
@@ -407,9 +406,9 @@ bool InstallNSP(const std::string& filename, const FsStorageId destStorageId, co
     return true;
 }
 
-bool InstallExtracted(const std::string& filename, const FsStorageId destStorageId, const bool ignoreReqFirmVersion, float* progress)
+bool InstallExtracted(const std::string& filename, const FsStorageId destStorageId, const bool ignoreReqFirmVersion)
 {
-    return InstallNSP(filename, destStorageId, ignoreReqFirmVersion, true, progress);
+    return InstallNSP(filename, destStorageId, ignoreReqFirmVersion, true);
 }
 
 void ExtractNCA(SimpleFileSystem& simpleFS, const NcmNcaId& ncaId, const std::string& outputPath)
@@ -449,7 +448,6 @@ void ExtractNCA(SimpleFileSystem& simpleFS, const NcmNcaId& ncaId, const std::st
         return;
     }
 
-    float progress = 0;
     while (fileOff < ncaSize)
     {
         // Clear the buffer before we read anything, just to be sure
@@ -466,6 +464,7 @@ void ExtractNCA(SimpleFileSystem& simpleFS, const NcmNcaId& ncaId, const std::st
         fwrite(readBuffer.get(), readSize, 1, NCAfile);
         fileOff += readSize;
     }
+    progress = 1.f;
     fclose(NCAfile);
 }
 
@@ -489,7 +488,7 @@ bool ExtractNSP_NCAS(const std::string&  filename)
         LOG("                    \n");
         LOG("Reading CNMT...\n");
 
-        tin::util::ByteBuffer cnmtBuf;
+        tin::data::ByteBuffer cnmtBuf;
         auto cnmtTuple = ReadCNMT(simpleFS);
         nx::ncm::ContentMeta    contentMeta       = std::get<0>(cnmtTuple);
         nx::ncm::ContentRecord  cnmtContentRecord = std::get<1>(cnmtTuple);
@@ -515,7 +514,7 @@ bool ExtractNSP_NCAS(const std::string&  filename)
 
 //            0x10 = 16            = PFS0 (4bytes) + numFiles (4bytes) + str_table_len (4bytes) + unused (4bytes)
 // numFiles * 0x18 = numFiles * 24 = data_offset (8bytes) + data_size (8bytes) + str_offset (4bytes) + unused (4bytes)
-bool ExtractNSP(const std::string& filename, float* progress)
+bool ExtractNSP(const std::string& filename)
 {
     // Output Path
     char outputDir[1024];
@@ -619,7 +618,6 @@ bool ExtractNSP(const std::string& filename, float* progress)
 
         // Write file
         u64   fileOff  = 0;
-        float debugProgress = 0;
         while (fileOff < fileDesc.dataSize)
         {
             // Read buffer
@@ -629,11 +627,10 @@ bool ExtractNSP(const std::string& filename, float* progress)
                 fprintf(stderr, "Failed to allocate read buffer for %s", outputFilename.c_str());
 
             // Clear the buffer before we read anything, just to be sure
-            debugProgress = (float)fileOff / (float)fileDesc.dataSize;
-            if(progress != nullptr) *progress = debugProgress;
+            progress = (float)fileOff / (float)fileDesc.dataSize;
 
             if (fileOff % (0x400000 * 3) == 0)
-                LOG("> Progress: %lu/%lu MB (%d%s)\n", (fileOff / 1000000), (fileDesc.dataSize / 1000000), (int)(debugProgress * 100.0), "%");
+                LOG("> Progress: %lu/%lu MB (%d%s)\n", (fileOff / 1000000), (fileDesc.dataSize / 1000000), (int)(progress * 100.0), "%");
 
             if (fileOff + readSize >= fileDesc.dataSize)
                 readSize = fileDesc.dataSize - fileOff;
@@ -643,7 +640,7 @@ bool ExtractNSP(const std::string& filename, float* progress)
             fileOff += readSize;
         }
         fclose(outfile);
-        if(progress != nullptr) *progress = 1.f;
+        progress = 1.f;
     }
     fclose(NSPfile);
     return true;

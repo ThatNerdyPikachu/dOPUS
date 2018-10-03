@@ -3,7 +3,7 @@
 #include "hfs0.h"
 #include "nca.h"
 
-void hfs0_process(hfs0_ctx_t *ctx, float* progress) {
+void hfs0_process(hfs0_ctx_t *ctx) {
     /* Read *just* safe amount. */
     hfs0_header_t raw_header; 
     fseeko64(ctx->file, ctx->offset, SEEK_SET);
@@ -43,7 +43,7 @@ void hfs0_process(hfs0_ctx_t *ctx, float* progress) {
         }
         cur_ofs += cur_file->size;
     }
-    hfs0_save(ctx, progress);
+    hfs0_save(ctx);
 }
 
 int hfs0_saved_nca_process(filepath_t *filepath, nxci_ctx_t *tool)
@@ -65,7 +65,7 @@ int hfs0_saved_nca_process(filepath_t *filepath, nxci_ctx_t *tool)
     return 1;
 }
 
-void hfs0_save_file(hfs0_ctx_t *ctx, uint32_t i, filepath_t *dirpath, float* progress) {
+void hfs0_save_file(hfs0_ctx_t *ctx, uint32_t i, filepath_t *dirpath) {
     if (i >= ctx->header->num_files) {
         fprintf(stderr, "Could not save file %"PRId32"!\n", i);
         exit(EXIT_FAILURE);
@@ -82,7 +82,7 @@ void hfs0_save_file(hfs0_ctx_t *ctx, uint32_t i, filepath_t *dirpath, float* pro
     filepath_append(&filepath, "%s", hfs0_get_file_name(ctx->header, i));
     printf("Saving %s to %s\n", hfs0_get_file_name(ctx->header, i), filepath.char_path);
     uint64_t ofs = hfs0_get_header_size(ctx->header) + cur_file->offset;
-    save_file_section(ctx->file, ctx->offset + ofs, cur_file->size, &filepath, progress);
+    save_file_section(ctx->file, ctx->offset + ofs, cur_file->size, &filepath);
     if (!hfs0_saved_nca_process(&filepath,ctx->tool_ctx))
     {
         exit(EXIT_FAILURE);
@@ -90,7 +90,7 @@ void hfs0_save_file(hfs0_ctx_t *ctx, uint32_t i, filepath_t *dirpath, float* pro
 }
 
 
-void hfs0_save(hfs0_ctx_t *ctx, float* progress) {
+void hfs0_save(hfs0_ctx_t *ctx) {
     /* Extract to directory. */
     filepath_t *dirpath = NULL;
     if (ctx->tool_ctx->file_type == FILETYPE_HFS0 && ctx->tool_ctx->settings.out_dir_path.enabled) {
@@ -102,7 +102,7 @@ void hfs0_save(hfs0_ctx_t *ctx, float* progress) {
     if (dirpath != NULL && dirpath->valid == VALIDITY_VALID) {
         os_makedir(dirpath->os_path);
         for (uint32_t i = 0; i < ctx->header->num_files; i++) {
-            hfs0_save_file(ctx, i, dirpath, progress);
+            hfs0_save_file(ctx, i, dirpath);
         }
     }
 }

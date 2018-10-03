@@ -41,7 +41,7 @@ BUILD		:=	_release
 endif
 SOURCES		:=	source nxFramework nxFramework/SDL \
 				externals/Tinfoil/source externals/Tinfoil/source/nx externals/Tinfoil/source/nx/ipc \
-				externals/Tinfoil/source/util externals/Tinfoil/source/install externals/4NXCI
+				externals/Tinfoil/source/util externals/Tinfoil/source/data externals/Tinfoil/source/install externals/4NXCI
 DATA		:=	data
 INCLUDES	:=	./ source nxFramework externals externals/Tinfoil/include \
 				externals/4NXCI externals/4NXCI/mbedtls/include
@@ -63,7 +63,7 @@ CFLAGS	+=	$(INCLUDE) -D__SWITCH__
 CFLAGS	+=	-D_BSD_SOURCE -D_POSIX_SOURCE -D_POSIX_C_SOURCE=200112L -D_DEFAULT_SOURCE -D__USE_MINGW_ANSI_STDIO=1 -D_FILE_OFFSET_BITS=64
 
 ifeq ($(DEBUG), 1)
-CFLAGS   += -O2 -DDEBUG
+CFLAGS   += -O0 -DDEBUG
 else
 CFLAGS   += -O2 -DNDEBUG
 endif

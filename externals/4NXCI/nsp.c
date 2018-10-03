@@ -6,7 +6,9 @@
 #include "pfs0.h"
 #include "utils.h"
 
-void nsp_create(nsp_ctx_t *nsp_ctx, float* progress)
+extern float progress;
+
+void nsp_create(nsp_ctx_t *nsp_ctx)
 {
     // nsp file name is tid.nsp
     printf("Creating nsp %s\n", nsp_ctx->filepath.char_path);
@@ -80,15 +82,14 @@ void nsp_create(nsp_ctx_t *nsp_ctx, float* progress)
             exit(EXIT_FAILURE);
         }
 
-        float debugProgress = 0;
+        progress = 0;
         uint64_t ofs = 0;
         while (ofs < nsp_ctx->nsp_entry[i2].filesize)
         {
-            debugProgress = (float)ofs / (float)nsp_ctx->nsp_entry[i2].filesize;
-            if(progress != NULL) *progress = debugProgress;
+            progress = (float)ofs / (float)nsp_ctx->nsp_entry[i2].filesize;
 
             if (ofs % (0x400000 * 3) == 0)
-                printf("> Saving Progress: %lu/%lu MB (%d%s)\n", (ofs / 1000000), (nsp_ctx->nsp_entry[i2].filesize / 1000000), (int)(debugProgress * 100.0), "%");
+                printf("> Saving Progress: %lu/%lu MB (%d%s)\n", (ofs / 1000000), (nsp_ctx->nsp_entry[i2].filesize / 1000000), (int)(progress * 100.0), "%");
 
             if (ofs + read_size >= nsp_ctx->nsp_entry[i2].filesize)
                 read_size = nsp_ctx->nsp_entry[i2].filesize - ofs;
@@ -100,6 +101,7 @@ void nsp_create(nsp_ctx_t *nsp_ctx, float* progress)
             fwrite(buf, read_size, 1, nsp_file);
             ofs += read_size;
         }
+        progress = 1.f;
         fclose(nsp_data_file);
         free(buf);
     }
