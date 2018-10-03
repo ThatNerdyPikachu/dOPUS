@@ -3,6 +3,7 @@
 #include "filehelper.h"
 
 extern "C" {
+#undef exit
 #include <getopt.h>
 #include <errno.h>
 #include <stdio.h>

@@ -3,6 +3,7 @@
 #include <string.h>
 #include <vector>
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdexcept>
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -44,3 +45,22 @@
 #define ROOT_PATH "/"
 
 void printBytes(u8 *bytes, size_t size, bool includeHeader);
+
+// Test this. If it works well, put it in mbedtls' config.h
+// Then log all the fopens so we can close them all in case something goes south to avoid exFat corruption
+
+
+// fopen and fclose override
+/*
+#ifdef fopen
+#undef fopen
+#endif
+#ifdef fclose
+#undef fclose
+#endif
+
+#define fopen(fn, mode) do_fopen(fn, mode)
+#define fclose(f)       do_fclose(f)
+FILE*   do_fopen(const char *fn, const char *mode);
+int     do_fclose(FILE* f);
+*/
