@@ -6,7 +6,9 @@
 #include "pfs0.h"
 #include "utils.h"
 
+#include <switch.h>
 extern float progress;
+extern float progressSpeed;
 
 void nsp_create(nsp_ctx_t *nsp_ctx)
 {
@@ -82,11 +84,28 @@ void nsp_create(nsp_ctx_t *nsp_ctx)
             throw_runtime_error(EXIT_FAILURE);
         }
 
-        progress = 0;
-        uint64_t ofs = 0;
+        uint64_t ofs        = 0;
+        uint64_t freq       = armGetSystemTickFreq();
+        uint64_t startTime  = armGetSystemTick();
+        progress            = 0.f;
+        progressSpeed       = 0.f;
+        size_t startSize    = 0;
+
         while (ofs < nsp_ctx->nsp_entry[i2].filesize)
         {
             progress = (float)ofs / (float)nsp_ctx->nsp_entry[i2].filesize;
+
+            // Progress speed in MB/s
+            uint64_t newTime = armGetSystemTick();
+            if (newTime - startTime >= freq)
+            {
+                size_t newSize      = ofs;
+                double mbRead       = (newSize / (1024.0 * 1024.0)) - (startSize / (1024 * 1024));
+                double duration     = ((double)(newTime - startTime) / (double)freq);
+                progressSpeed       = (float)(mbRead / duration);
+                startTime           = newTime;
+                startSize           = newSize;
+            }
 
             if (ofs % (0x400000 * 3) == 0)
                 printf("> Saving Progress: %lu/%lu MB (%d%s)\n", (ofs / 1000000), (nsp_ctx->nsp_entry[i2].filesize / 1000000), (int)(progress * 100.0), "%");

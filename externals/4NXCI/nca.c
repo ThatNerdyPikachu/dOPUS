@@ -11,7 +11,9 @@
 #include "extkeys.h"
 #include "filepath.h"
 
+#include <switch.h>
 extern float progress;
+extern float progressSpeed;
 
 /* Initialize the context. */
 void nca_init(nca_ctx_t *ctx)
@@ -524,16 +526,33 @@ void nca_gamecard_process(nca_ctx_t *ctx, filepath_t *filepath, int index, cnmt_
         throw_runtime_error(EXIT_FAILURE);
     }
     fseeko64(ctx->file, 0, SEEK_SET);
-    uint64_t ofs = 0;
-    uint64_t filesize = nca_size;
-
-    progress = 0;
-    uint64_t readBytes = 0;
+    uint64_t ofs        = 0;
+    uint64_t filesize   = nca_size;
+    uint64_t readBytes  = 0;
     uint64_t sizeToRead = filesize-ofs;
+
+    uint64_t freq       = armGetSystemTickFreq();
+    uint64_t startTime  = armGetSystemTick();
+    size_t   startSize  = 0;
+    progress            = 0.f;
+    progressSpeed       = 0.f;
 
     while (ofs < filesize)
     {
+        // Progress in %
         progress = (float)readBytes / (float)sizeToRead;
+
+        // Progress speed in MB/s
+        uint64_t newTime = armGetSystemTick();
+        if (newTime - startTime >= freq)
+        {
+            size_t newSize      = readBytes;
+            double mbRead       = (newSize / (1024.0 * 1024.0)) - (startSize / (1024 * 1024));
+            double duration     = ((double)(newTime - startTime) / (double)freq);
+            progressSpeed       = (float)(mbRead / duration);
+            startTime           = newTime;
+            startSize           = newSize;
+        }
 
         if (readBytes % (0x400000 * 3) == 0)
             printf("> Patching Progress: %lu/%lu MB (%d%s)\n", (readBytes / 1000000), (sizeToRead / 1000000), (int)(progress * 100.0), "%");

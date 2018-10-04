@@ -24,7 +24,8 @@ namespace
 }
 
 float progress        = 0.f;
-int   progressState   = 0; // 0..n various state depending on the context, -1 means error
+int   progressState   = 0;      // 0..n various state depending on the context, -1 means error
+float progressSpeed   = 0.f;
 
 int InstallThread(void* in)
 {
@@ -252,6 +253,7 @@ void DLGInstall::Update(const double timer, const u64 kDown)
             dlgState        = DLG_DONE;
             dlgMode         = DLG_INSTALL;
             progress        = 0.f;
+            progressSpeed   = 0.f;
             progressState   = 0;
             enoughSpace     = true;
         }
@@ -279,6 +281,7 @@ void DLGInstall::CleanUp()
     dlgState        = DLG_DONE;
     dlgMode         = DLG_INSTALL;
     progress        = 0.f;
+    progressSpeed   = 0.f;
     progressState   = 0;
     enoughSpace     = true;
     displayOpenFiles();
@@ -421,8 +424,8 @@ void DLGInstall::Render(const double timer)
         int barSize           = 850;
         int borderSize        = 3;
 
-        char percentStr[10];
-        sprintf(percentStr, "%d%s", (int)(progress * 100.0), "%");
+        char percentStr[32];
+        sprintf(percentStr, "%d%s - %.2f MB/s", (int)(progress * 100.0), "%", progressSpeed);
         int percent_witdh  = 0;
         int percent_height = 0;
         TTF_SizeText(rootGui->FontHandle(GUI::Roboto), percentStr, &percent_witdh, &percent_height);

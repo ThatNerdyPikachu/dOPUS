@@ -11,6 +11,7 @@
 using namespace tin::install::nsp;
 
 extern float progress;
+extern float progressSpeed;
 
 namespace NXFramework
 {
@@ -276,7 +277,7 @@ void InstallNCA(SimpleFileSystem& simpleFS, const NcmNcaId& ncaId, const FsStora
     auto ncaFile    = simpleFS.OpenFile(ncaName);
     size_t ncaSize  = ncaFile.GetSize();
     u64 fileOff     = 0;
-    size_t readSize = 0x400000; // 4MB buff
+    size_t readSize = 0x400000; // 4 MB buffer.
     auto readBuffer = std::make_unique<u8[]>(readSize);
 
     if (readBuffer == NULL)
@@ -285,10 +286,27 @@ void InstallNCA(SimpleFileSystem& simpleFS, const NcmNcaId& ncaId, const FsStora
     LOG("Size: 0x%lx\n", ncaSize);
     contentStorage.CreatePlaceholder(ncaId, ncaId, ncaSize);
 
+    u64 freq            = armGetSystemTickFreq();
+    u64 startTime       = armGetSystemTick();
+    progress            = 0.f;
+    progressSpeed       = 0.f;
+    size_t startSize    = 0;
     while (fileOff < ncaSize)
     {
-        // Clear the buffer before we read anything, just to be sure
+        // Progress in %
         progress = (float)fileOff / (float)ncaSize;
+
+        // Progress speed in MB/s
+        u64 newTime = armGetSystemTick();
+        if (newTime - startTime >= freq)
+        {
+            size_t newSize      = fileOff;
+            double mbRead       = (newSize / (1024.0 * 1024.0)) - (startSize / (1024 * 1024));
+            double duration     = ((double)(newTime - startTime) / (double)freq);
+            progressSpeed       = (float)(mbRead / duration);
+            startTime           = newTime;
+            startSize           = newSize;
+        }
 
         if (fileOff % (0x400000 * 3) == 0)
             LOG("> Progress: %lu/%lu MB (%d%s)\n", (fileOff / 1000000), (ncaSize / 1000000), (int)(progress * 100.0), "%");
@@ -411,107 +429,6 @@ bool InstallExtracted(const std::string& filename, const FsStorageId destStorage
     return InstallNSP(filename, destStorageId, ignoreReqFirmVersion, true);
 }
 
-void ExtractNCA(SimpleFileSystem& simpleFS, const NcmNcaId& ncaId, const std::string& outputPath)
-{
-    std::string ncaName = tin::util::GetNcaIdString(ncaId);
-
-    if (simpleFS.HasFile(ncaName + ".nca"))
-        ncaName += ".nca";
-    else
-    if (simpleFS.HasFile(ncaName + ".cnmt.nca"))
-        ncaName += ".cnmt.nca";
-    else
-    {
-        throw std::runtime_error(("Failed to find NCA file " + ncaName + ".nca/.cnmt.nca").c_str());
-    }
-
-    LOG("NcaId: %s\n", ncaName.c_str());
-
-    auto ncaFile    = simpleFS.OpenFile(ncaName);
-    size_t ncaSize  = ncaFile.GetSize();
-    u64 fileOff     = 0;
-    size_t readSize = 0x400000; // 4MB buff
-    auto readBuffer = std::make_unique<u8[]>(readSize);
-
-    if (readBuffer == NULL)
-        throw std::runtime_error(("Failed to allocate read buffer for " + ncaName).c_str());
-
-    LOG("Size: 0x%lx\n", ncaSize);
-
-    // Output NCA File
-    std::string outputFilename = outputPath + "/" + ncaName;
-    LOG("Creating NCA File: %s\n", outputFilename.c_str());
-    FILE* NCAfile;
-    if (!(NCAfile = fopen(outputFilename.c_str(), "wb")))
-    {
-        fprintf(stderr, "unable to open %s: %s\n", outputFilename.c_str(), strerror(errno));
-        return;
-    }
-
-    while (fileOff < ncaSize)
-    {
-        // Clear the buffer before we read anything, just to be sure
-        progress = (float)fileOff / (float)ncaSize;
-
-        if (fileOff % (0x400000 * 3) == 0)
-            LOG("> Progress: %lu/%lu MB (%d%s)\n", (fileOff / 1000000), (ncaSize / 1000000), (int)(progress * 100.0), "%");
-
-        if (fileOff + readSize >= ncaSize)
-            readSize = ncaSize - fileOff;
-
-        ncaFile.Read(fileOff, readBuffer.get(), readSize);
-        //Write NCA file on disk
-        fwrite(readBuffer.get(), readSize, 1, NCAfile);
-        fileOff += readSize;
-    }
-    progress = 1.f;
-    fclose(NCAfile);
-}
-
-bool ExtractNSP_NCAS(const std::string&  filename)
-{
-    try
-    {
-        // Output Path
-        char outputDir[1024];
-        GetFileBasename(outputDir, filename.c_str());
-
-        // Clean-up dir if it exists
-        RmDirRecursive(outputDir);
-        mkdir(outputDir, 0777);
-
-        std::string fullPath = "@Sdcard:/" + filename;
-        nx::fs::IFileSystem fileSystem;
-        fileSystem.OpenFileSystemWithId(fullPath, FsFileSystemType_ApplicationPackage, 0);
-        SimpleFileSystem simpleFS(fileSystem, "/", fullPath + "/");
-
-        LOG("                    \n");
-        LOG("Reading CNMT...\n");
-
-        tin::data::ByteBuffer cnmtBuf;
-        auto cnmtTuple = ReadCNMT(simpleFS);
-        nx::ncm::ContentMeta    contentMeta       = std::get<0>(cnmtTuple);
-        nx::ncm::ContentRecord  cnmtContentRecord = std::get<1>(cnmtTuple);
-
-        LOG("Extracting CNMT NCA...\n");
-        ExtractNCA(simpleFS, cnmtContentRecord.ncaId, outputDir);
-
-        LOG("Extracting NCAs...\n");
-        for (auto& record : contentMeta.GetContentRecords())
-        {
-            LOG("Installing from %s\n", tin::util::GetNcaIdString(record.ncaId).c_str());
-            ExtractNCA(simpleFS, record.ncaId, outputDir);
-        }
-    }
-    catch (std::exception& e)
-    {
-        LOG("Failed to extract NSP!\n");
-        LOG("%s", e.what());
-        return false;
-    }
-    return true;
-}
-
 //            0x10 = 16            = PFS0 (4bytes) + numFiles (4bytes) + str_table_len (4bytes) + unused (4bytes)
 // numFiles * 0x18 = numFiles * 24 = data_offset (8bytes) + data_size (8bytes) + str_offset (4bytes) + unused (4bytes)
 bool ExtractNSP(const std::string& filename)
@@ -619,18 +536,36 @@ bool ExtractNSP(const std::string& filename)
             // Seek
             fseek(NSPfile, fileDesc.absDataOffset, SEEK_SET);
 
+            // Read buffer
+            size_t readSize = 0x400000; // 4 MB buffer.
+            auto readBuffer = std::make_unique<u8[]>(readSize);
+            if (readBuffer == NULL)
+                fprintf(stderr, "Failed to allocate read buffer for %s", outputFilename.c_str());
+
             // Write file
-            u64   fileOff  = 0;
+            u64 fileOff         = 0;
+            u64 freq            = armGetSystemTickFreq();
+            u64 startTime       = armGetSystemTick();
+            progress            = 0.f;
+            progressSpeed       = 0.f;
+            size_t startSize    = 0;
+
             while (fileOff < fileDesc.dataSize)
             {
-                // Read buffer
-                size_t readSize = 0x400000; // 4MB buff
-                auto readBuffer = std::make_unique<u8[]>(readSize);
-                if (readBuffer == NULL)
-                    fprintf(stderr, "Failed to allocate read buffer for %s", outputFilename.c_str());
-
-                // Clear the buffer before we read anything, just to be sure
+                // Progress in %
                 progress = (float)fileOff / (float)fileDesc.dataSize;
+
+                // Progress speed in MB/s
+                u64 newTime = armGetSystemTick();
+                if (newTime - startTime >= freq)
+                {
+                    size_t newSize      = fileOff;
+                    double mbRead       = (newSize / (1024.0 * 1024.0)) - (startSize / (1024 * 1024));
+                    double duration     = ((double)(newTime - startTime) / (double)freq);
+                    progressSpeed       = (float)(mbRead / duration);
+                    startTime           = newTime;
+                    startSize           = newSize;
+                }
 
                 if (fileOff % (0x400000 * 3) == 0)
                     LOG("> Progress: %lu/%lu MB (%d%s)\n", (fileOff / 1000000), (fileDesc.dataSize / 1000000), (int)(progress * 100.0), "%");
