@@ -20,6 +20,10 @@ void dOPUS::Shutdown()
 
 void dOPUS::Update(const double timer, const u64 kDown)
 {
+#ifdef DEBUG
+    if (kDown & KEY_ZL)
+        displayOpenFiles();
+#endif
     gui.Update(timer, kDown);
 }
 
@@ -56,12 +60,14 @@ int main(int argc, char **argv)
             kDown = hidKeysDown(CONTROLLER_P1_AUTO);
         }
     }
+#ifdef DEBUG
     if(openFileCount() != 0)
     {
         LOG("Quitting dOPUS: some files are still open!");
         displayOpenFiles();
         return 0;
     }
+#endif
     LOG("Quitting dOPUS: all good!");
     return 0;
 }
