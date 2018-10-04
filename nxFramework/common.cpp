@@ -20,6 +20,20 @@ void printBytes(u8 *bytes, size_t size, bool includeHeader)
     printf("\n");
 }
 
+
+extern "C" FILE* __real_fopen (const char *path, const char *mode);
+extern "C" int __real_fclose (FILE* stream);
+extern "C" int __wrap_fclose (FILE* stream)
+{
+    printf("\n\nWRAPPER fclose\n");
+    return __real_fclose(stream);
+}
+extern "C" FILE* __wrap_fopen (const char *path, const char *mode)
+{
+    printf("\n\nWRAPPER fopen %s\n", path);
+    return __real_fopen(path, mode);
+}
+
 /*
 #include <map>
 std::map<FILE*, std::string> openFiles;
