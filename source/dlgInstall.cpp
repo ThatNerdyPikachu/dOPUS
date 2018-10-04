@@ -8,7 +8,7 @@
 #include "gui.h"
 
 using namespace NXFramework;
-
+bool threadRunning = false;
 
 namespace
 {
@@ -23,7 +23,6 @@ namespace
     };
     thrd_t              processThread;
     ProcessThreadArgs   processThreadArgs;
-    bool                threadRunning = false;
 }
 
 float progress        = 0.f;

@@ -190,11 +190,37 @@ void GUI::Render(const double timer)
     SDL::DrawRect(SDL::Renderer, 0, 0, 1280, 40, STATUS_BAR_COL);	// Status bar
     SDL::DrawRect(SDL::Renderer, 0, 40, 1280, 40, MENU_BAR_COL);	// Directory bar
 
+    // Title
     int height = 0;
-    TTF_SizeText(fonts[Roboto], "dOPUS", NULL, &height);
+    int width  = 0;
+    TTF_SizeText(fonts[Roboto], "dOPUS 0.6", &width, &height);
     SDL::DrawText(SDL::Renderer, fonts[Roboto], 12, (40 - height) / 2, CYAN, "dOPUS 0.6");
 
+    // Free space
+    {
+        char freeSDStr[32];
+        char totalSDStr[32];
+        char freeNandStr[32];
+        char totalNandstr[32];
+        u64 freeSDu     = GetFreeSpace(FsStorageId_SdCard);
+        u64 totalSDu    = GetTotalSpace(FsStorageId_SdCard);
+        u64 freeNandu   = GetFreeSpace(FsStorageId_NandUser);
+        u64 totalNandu  = GetTotalSpace(FsStorageId_NandUser);
+        GetSizeString(freeSDStr, freeSDu);
+        GetSizeString(totalSDStr, totalSDu);
+        GetSizeString(freeNandStr, freeNandu);
+        GetSizeString(totalNandstr, totalNandu);
+        std::string freeSpace =       std::string ("SD ")       + std::string (freeSDStr) +
+        std::string ("/")           + std::string(totalSDStr)   + std::string ("      Nand ") +
+        std::string(freeNandStr)    + std::string ("/")         + std::string(totalNandstr);
+        TTF_SizeText(fonts[Roboto], freeSpace.c_str(), NULL, &height);
+        SDL::DrawText(SDL::Renderer, fonts[Roboto], 60 + width, (40 - height) / 2, WHITE, freeSpace.c_str());
+    }
+
+    // Status bar
     StatusBarDisplayTime();
+
+    // File browser
     if(guiFileBrowser->IsEnabled())
         guiFileBrowser->Render(timer);
 }

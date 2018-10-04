@@ -2,6 +2,10 @@
 #include "common.h"
 #include <Tinfoil/include/nx/ipc/tin_ipc.h>
 
+// ugly hack, but have to prevent hard quitting during install
+// to prevent exFat corruption
+extern bool threadRunning;
+
 namespace NXFramework
 {
 App* GlobalApp = nullptr;
@@ -144,7 +148,7 @@ void App::Update_Internal()
     #ifdef DEBUG
     DebugController(kDown);
     #endif
-    if (kDown & KEY_PLUS) isAlive = false;
+    if ((kDown & KEY_PLUS) && !threadRunning) isAlive = false;
     Update(deltaTime, kDown);
 }
 
