@@ -8,7 +8,6 @@
 #include "gui.h"
 
 using namespace NXFramework;
-bool threadRunning = false;
 
 namespace
 {
@@ -21,13 +20,11 @@ namespace
         bool*       running;
         bool        deleteSourceFile;
     };
-    thrd_t              processThread;
     ProcessThreadArgs   processThreadArgs;
 }
 
 float progress        = 0.f;
 int   progressState   = 0; // 0..n various state depending on the context, -1 means error
-
 
 int InstallThread(void* in)
 {
@@ -194,11 +191,11 @@ void DLGInstall::Update(const double timer, const u64 kDown)
                     processThreadArgs.filename               = filename;
                     processThreadArgs.destStorageId          = destStorageId;
                     processThreadArgs.ignoreReqFirmVersion   = true;
-                    processThreadArgs.running                = &threadRunning;
+                    processThreadArgs.running                = &workerThread.running;
                     processThreadArgs.deleteSourceFile       = (dlgMode == DLG_INSTALL_DELETE);
-                    threadRunning                            = true;
+                    workerThread.running                     = true;
                     LOG("Installing %s to %s...\n", filePath.c_str(), destStorageId==FsStorageId_SdCard?"SD Card":"Nand");
-                    thrd_create(&processThread, InstallThread, &processThreadArgs);
+                    thrd_create(&workerThread.thread, InstallThread, &processThreadArgs);
                     dlgState = DLG_PROGRESS;
                 }
                 else
@@ -211,10 +208,10 @@ void DLGInstall::Update(const double timer, const u64 kDown)
                     processThreadArgs.destStorageId          = destStorageId;
                     processThreadArgs.ignoreReqFirmVersion   = true;
                     processThreadArgs.deleteSourceFile       = false;
-                    processThreadArgs.running                = &threadRunning;
-                    threadRunning                            = true;
+                    processThreadArgs.running                = &workerThread.running;
+                    workerThread.running                     = true;
                     LOG("Installing folder %s to %s...\n", filePath.c_str(), destStorageId==FsStorageId_SdCard?"SD Card":"Nand");
-                    thrd_create(&processThread, InstallExtractedThread, &processThreadArgs);
+                    thrd_create(&workerThread.thread, InstallExtractedThread, &processThreadArgs);
                     dlgState = DLG_PROGRESS;
                 }
                 else
@@ -225,10 +222,10 @@ void DLGInstall::Update(const double timer, const u64 kDown)
                     processThreadArgs.filedir                = filedir;
                     processThreadArgs.filename               = filename;
                     processThreadArgs.deleteSourceFile       = false;
-                    processThreadArgs.running                = &threadRunning;
-                    threadRunning                            = true;
+                    processThreadArgs.running                = &workerThread.running;
+                    workerThread.running                     = true;
                     LOG("Extracting %s...\n", filePath.c_str());
-                    thrd_create(&processThread, ExtractThread, &processThreadArgs);
+                    thrd_create(&workerThread.thread, ExtractThread, &processThreadArgs);
                     dlgState = DLG_PROGRESS;
                 }
                 if(dlgMode == DLG_CONVERT)
@@ -238,10 +235,10 @@ void DLGInstall::Update(const double timer, const u64 kDown)
                     processThreadArgs.filedir                = filedir;
                     processThreadArgs.filename               = filename;
                     processThreadArgs.deleteSourceFile       = false;
-                    processThreadArgs.running                = &threadRunning;
-                    threadRunning                            = true;
+                    processThreadArgs.running                = &workerThread.running;
+                    workerThread.running                     = true;
                     LOG("Extracting %s...\n", filePath.c_str());
-                    thrd_create(&processThread, ConvertThread, &processThreadArgs);
+                    thrd_create(&workerThread.thread, ConvertThread, &processThreadArgs);
                     dlgState = DLG_PROGRESS;
                 }
             }
@@ -261,10 +258,10 @@ void DLGInstall::Update(const double timer, const u64 kDown)
     else
     if(dlgState == DLG_PROGRESS)
     {
-        if(progressState == -1) // if error
+        if(progressState == -1)     // if error
             dlgState = DLG_ERROR;
         else
-        if(!threadRunning)      // we are done and no error
+        if(!workerThread.running)   // we are done and no error
             CleanUp();
     }
     else
@@ -277,7 +274,7 @@ void DLGInstall::Update(const double timer, const u64 kDown)
 
 void DLGInstall::CleanUp()
 {
-    thrd_join(processThread, NULL);
+    thrd_join(workerThread.thread, NULL);
     dlgState        = DLG_DONE;
     dlgMode         = DLG_INSTALL;
     progress        = 0.f;

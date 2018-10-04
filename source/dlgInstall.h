@@ -3,7 +3,6 @@
 #include <common.h>
 #include "gui.h"
 #include <string>
-#include <threads.h>
 
 using namespace NXFramework;
 
@@ -44,8 +43,8 @@ private:
     void        CleanUp();
     DlgState    dlgState        = DLG_CONFIRMATION;
     DlgMode     dlgMode         = DLG_INSTALL;
-    std::string filedir;
-    std::string filename;
     FsStorageId destStorageId   = FsStorageId_SdCard;
     bool        enoughSpace     = true;
+    std::string filedir;
+    std::string filename;
 };

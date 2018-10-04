@@ -10,7 +10,7 @@
 #include <sys/errno.h>
 #include <unistd.h>
 #include <switch.h>
-
+#include <threads.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL2_gfxPrimitives.h>
 #include <SDL2/SDL_image.h>
@@ -44,23 +44,14 @@
 
 #define ROOT_PATH "/"
 
+// TODO: write a simple thread pool/factory mechanism
+struct WorkerThread
+{
+    bool    running = false;
+    thrd_t  thread;
+};
+static WorkerThread workerThread;
+
 void printBytes(u8 *bytes, size_t size, bool includeHeader);
 
-// Test this. If it works well, put it in mbedtls' config.h
-// Then log all the fopens so we can close them all in case something goes south to avoid exFat corruption
 
-
-// fopen and fclose override
-/*
-#ifdef fopen
-#undef fopen
-#endif
-#ifdef fclose
-#undef fclose
-#endif
-
-#define fopen(fn, mode) do_fopen(fn, mode)
-#define fclose(f)       do_fclose(f)
-FILE*   do_fopen(const char *fn, const char *mode);
-int     do_fclose(FILE* f);
-*/
