@@ -36,6 +36,8 @@ extern "C" int __wrap_fclose (FILE* f)
 void displayOpenFiles()
 {
 #ifdef DEBUG
+    LOG("\n%d Open files:\n", (int)openFiles.size());
+    LOG("------------------\n");
     for (auto it=openFiles.begin(); it!=openFiles.end(); ++it)
         LOG("%p %s\n", it->first, it->second.c_str());
 #endif
