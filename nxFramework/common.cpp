@@ -23,6 +23,8 @@ void printBytes(u8 *bytes, size_t size, bool includeHeader)
 
 extern "C" FILE* __real_fopen (const char *path, const char *mode);
 extern "C" int __real_fclose (FILE* stream);
+extern "C" void __real_exit (int status);
+
 extern "C" int __wrap_fclose (FILE* stream)
 {
     printf("\n\nWRAPPER fclose\n");
@@ -32,6 +34,11 @@ extern "C" FILE* __wrap_fopen (const char *path, const char *mode)
 {
     printf("\n\nWRAPPER fopen %s\n", path);
     return __real_fopen(path, mode);
+}
+extern "C" void __wrap_exit (int status)
+{
+    printf("\n\nWRAPPER exit: %d\n", status);
+    throw std::runtime_error(std::string("Exception on Exit: ") + char('0' + status));
 }
 
 /*

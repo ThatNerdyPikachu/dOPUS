@@ -72,7 +72,8 @@ CXXFLAGS	:= $(CFLAGS) -std=gnu++17 -Wformat-truncation=0
 CXXFLAGS+= -D_BSD_SOURCE -D_POSIX_SOURCE -D_POSIX_C_SOURCE=200112L -D_DEFAULT_SOURCE -D__USE_MINGW_ANSI_STDIO=1 -D_FILE_OFFSET_BITS=64
 
 ASFLAGS	:=	-g $(ARCH)
-LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map) -Wl,--wrap=fopen -Wl,-wrap=fclose
+LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map) \
+			-Wl,--wrap=fopen -Wl,-wrap=fclose -Wl,-wrap=exit
 
 LIBS	:=	-lSDL2_ttf -lSDL2_gfx -lSDL2_image \
 			-lpng -ljpeg `sdl2-config --libs` `freetype-config --libs` -lnx  \
