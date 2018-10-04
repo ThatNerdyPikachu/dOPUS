@@ -14,6 +14,7 @@ public:
     {
         DLG_CONFIRMATION,
         DLG_PROGRESS,
+        DLG_ERROR,
         DLG_DONE,
         DLG_IDLE
     };
@@ -40,6 +41,7 @@ public:
     DlgMode     GetMode ()                  { return dlgMode; }
 
 private:
+    void        CleanUp();
     DlgState dlgState           = DLG_CONFIRMATION;
     DlgMode  dlgMode            = DLG_INSTALL;
     std::string filedir;

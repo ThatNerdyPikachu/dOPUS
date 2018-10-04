@@ -27,7 +27,7 @@ namespace
 }
 
 float progress        = 0.f;
-int   progressState   = 0;
+int   progressState   = 0; // 0..n various state depending on the context, -1 means error
 
 
 int InstallThread(void* in)
@@ -37,7 +37,9 @@ int InstallThread(void* in)
     LOG("Installing %s...\n", filePath.c_str());
     if(strncasecmp(GetFileExt(args->filename.c_str()), "nsp", 3) == 0)
     {
-        InstallNSP(filePath, args->destStorageId, args->ignoreReqFirmVersion, false);
+        if(!InstallNSP(filePath, args->destStorageId, args->ignoreReqFirmVersion, false))
+            progressState = -1;
+
         if(args->deleteSourceFile)
         {
             LOG("Deleting file %s...\n", filePath.c_str());
@@ -48,7 +50,8 @@ int InstallThread(void* in)
     else
     if(strncasecmp(GetFileExt(args->filename.c_str()), "xci", 3) == 0)
     {
-        InstallXCI(filePath, args->destStorageId, args->ignoreReqFirmVersion, args->deleteSourceFile);
+        if(!InstallXCI(filePath, args->destStorageId, args->ignoreReqFirmVersion, args->deleteSourceFile))
+            progressState = -1;
     }
     *(args->running) = false;
     return 0;
@@ -59,7 +62,9 @@ int InstallExtractedThread(void* in)
     ProcessThreadArgs* args = reinterpret_cast<ProcessThreadArgs*>(in);
     std::string filePath = args->filedir + args->filename;
     LOG("Installing folder %s...\n", filePath.c_str());
-    InstallExtracted(filePath, args->destStorageId, args->ignoreReqFirmVersion);
+    if(!InstallExtracted(filePath, args->destStorageId, args->ignoreReqFirmVersion))
+        progressState = -1;
+
     *(args->running) = false;
     return 0;
 }
@@ -71,12 +76,14 @@ int ExtractThread(void* in)
     LOG("\nExtracting %s...:)\n", filePath.c_str());
     if(strncasecmp(GetFileExt(args->filename.c_str()), "nsp", 3) == 0)
     {
-        ExtractNSP(filePath);
+        if(!ExtractNSP(filePath))
+            progressState = -1;
     }
     else
     if(strncasecmp(GetFileExt(args->filename.c_str()), "xci", 3) == 0)
     {
-        ExtractXCI(filePath, false);
+        if(!ExtractXCI(filePath, false))
+            progressState = -1;
     }
     *(args->running) = false;
     return 0;
@@ -89,7 +96,8 @@ int ConvertThread(void* in)
     LOG("\n Converting %s...:)\n", filePath.c_str());
     if(strncasecmp(GetFileExt(args->filename.c_str()), "xci", 3) == 0)
     {
-        ConvertXCI(filePath);
+        if(!ConvertXCI(filePath))
+            progressState = -1;
     }
     *(args->running) = false;
     return 0;
@@ -249,14 +257,27 @@ void DLGInstall::Update(const double timer, const u64 kDown)
     else
     if(dlgState == DLG_PROGRESS)
     {
-        // we are done
-        if(!threadRunning)
-        {
-            thrd_join(processThread, NULL);
-            dlgState = DLG_DONE;
-            dlgMode  = DLG_INSTALL;
-        }
+        if(progressState == -1) // if error
+            dlgState = DLG_ERROR;
+        else
+        if(!threadRunning)      // we are done and no error
+            CleanUp();
     }
+    else
+    if(dlgState == DLG_ERROR)
+    {
+        if (kDown & KEY_A)
+            CleanUp();
+    }
+}
+
+void DLGInstall::CleanUp()
+{
+    thrd_join(processThread, NULL);
+    dlgState        = DLG_DONE;
+    dlgMode         = DLG_INSTALL;
+    progress        = 0.f;
+    progressState   = 0;
 }
 
 void DLGInstall::Render(const double timer)
@@ -310,6 +331,9 @@ void DLGInstall::Render(const double timer)
 		case DLG_DONE:
             message = "Done!";
         break;
+        case DLG_ERROR:
+            message = "Error processing files!";
+        break;
 		case DLG_CONFIRMATION:
         default:
             if(dlgMode == DLG_EXTRACT)
@@ -331,7 +355,7 @@ void DLGInstall::Render(const double timer)
     int message_height = 0;
     TTF_SizeText(rootGui->FontHandle(GUI::Roboto), message.c_str(), NULL, &message_height);
     SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto),
-                  205, 255, TITLE_COL, message.c_str());
+                  205, 255, (dlgState == DLG_ERROR)?RED:TITLE_COL, message.c_str());
 
     // Filename
     SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto_small),
@@ -353,8 +377,8 @@ void DLGInstall::Render(const double timer)
     int options_cancel_height = 0;
     TTF_SizeText(rootGui->FontHandle(GUI::Roboto), "(B) Cancel", &options_cancel_width, &options_cancel_height);
     SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto),
-                  1070 - options_cancel_width,
-                  467  - options_cancel_height, dlgState == DLG_PROGRESS?DARK_GREY:TITLE_COL, "CANCEL");
+                  1060 - options_cancel_width,
+                  467  - options_cancel_height, dlgState != DLG_CONFIRMATION?DARK_GREY:TITLE_COL, "(B) CANCEL");
 
     // OK
     if(enoughSpace)
@@ -362,8 +386,8 @@ void DLGInstall::Render(const double timer)
         int options_ok_width  = 0;
         TTF_SizeText(rootGui->FontHandle(GUI::Roboto), "(A) OK", &options_ok_width, NULL);
         SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto),
-                      1070 - 50 - options_cancel_width - options_ok_width,
-                      467       - options_cancel_height, dlgState != DLG_CONFIRMATION?DARK_GREY:TITLE_COL, "OK");
+                      1060 - 50 - options_cancel_width - options_ok_width,
+                      467       - options_cancel_height, dlgState == DLG_PROGRESS?DARK_GREY:TITLE_COL, "(A) OK");
     }
 
     // SDCard or Nand

@@ -5,7 +5,7 @@
 #undef exit
 
 // 4NXCI and mbedtls are filled with exit() calls
-// this function overrides them and throws an exception instead
+// so we hook exit() and throw an exception instead :)
 extern "C" void exit(int value)
 {
   throw std::runtime_error(std::string("Exception on Exit: ") + char('0' + value));

@@ -48,7 +48,6 @@ int main(int argc, char **argv)
     }
     catch (...)
     {
-        printf("An unknown error occurred\n\nPress any button to exit.");
         LOG_DEBUG("An unknown error occurred:\n");
         u64 kDown = 0;
         while (!kDown)
