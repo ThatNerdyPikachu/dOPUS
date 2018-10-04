@@ -56,5 +56,12 @@ int main(int argc, char **argv)
             kDown = hidKeysDown(CONTROLLER_P1_AUTO);
         }
     }
+    if(openFileCount() != 0)
+    {
+        LOG("Quitting dOPUS: some files are still open!");
+        displayOpenFiles();
+        return 0;
+    }
+    LOG("Quitting dOPUS: all good!");
     return 0;
 }

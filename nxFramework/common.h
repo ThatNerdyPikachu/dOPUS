@@ -54,4 +54,5 @@ static WorkerThread workerThread;
 
 void printBytes(u8 *bytes, size_t size, bool includeHeader);
 void displayOpenFiles();
+int  openFileCount();
 

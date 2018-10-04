@@ -33,6 +33,14 @@ extern "C" int __wrap_fclose (FILE* f)
 }
 #endif
 
+int openFileCount()
+{
+#ifdef DEBUG
+    return (int)openFiles.size();
+#endif
+    return 0;
+}
+
 void displayOpenFiles()
 {
 #ifdef DEBUG
