@@ -252,6 +252,11 @@ void DLGInstall::Update(const double timer, const u64 kDown)
         {
             // Quit this window
             SetEnabled(false);
+            dlgState        = DLG_DONE;
+            dlgMode         = DLG_INSTALL;
+            progress        = 0.f;
+            progressState   = 0;
+            enoughSpace     = true;
         }
     }
     else
@@ -278,6 +283,7 @@ void DLGInstall::CleanUp()
     dlgMode         = DLG_INSTALL;
     progress        = 0.f;
     progressState   = 0;
+    enoughSpace     = true;
 }
 
 void DLGInstall::Render(const double timer)
@@ -354,23 +360,24 @@ void DLGInstall::Render(const double timer)
     // Message
     int message_height = 0;
     TTF_SizeText(rootGui->FontHandle(GUI::Roboto), message.c_str(), NULL, &message_height);
-    SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto),
-                  205, 255, (dlgState == DLG_ERROR)?RED:TITLE_COL, message.c_str());
-
-    // Filename
-    SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto_small),
-                  205, 255 + message_height, TITLE_COL, filename.c_str(), 600);
-
-    // Not enough space
-    if(!enoughSpace)
+    if(enoughSpace)
+    {
+        SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto),
+                      205, 255, (dlgState == DLG_ERROR)?RED:TITLE_COL, message.c_str());
+    }
+    else
     {
         std::string notEnoughSpace =
             std::string("Not enough free space on ")                                        +
             (destStorageId==FsStorageId_SdCard?std::string("SD Card"):std::string("Nand"))  +
             std::string("!");
-        SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto_small),
-                      205, 255 + message_height, RED, notEnoughSpace.c_str(), 600);
+        SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto),
+                      205, 255, RED, notEnoughSpace.c_str(), 600);
     }
+
+    // Filename
+    SDL::DrawText(SDL::Renderer, rootGui->FontHandle(GUI::Roboto_small),
+                  205, 255 + message_height, TITLE_COL, filename.c_str(), 600);
 
     // Cancel
     int options_cancel_width  = 0;

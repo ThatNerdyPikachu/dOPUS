@@ -205,8 +205,7 @@ void GUIFileBrowser::Update(const double timer, const u64 kDown)
 
         // Refresh folder view
         PopulateFiles(curDir, dirEntries, extFilters);
-        cursor.current  = 0;
-        cursor.top      = 0;
+        cursor.current = std::min(cursor.current, static_cast<int>(dirEntries.size()) - 1);
     }
 
     if(dlgInstall.IsEnabled())

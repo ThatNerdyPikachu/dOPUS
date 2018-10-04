@@ -42,8 +42,8 @@ public:
 
 private:
     void        CleanUp();
-    DlgState dlgState           = DLG_CONFIRMATION;
-    DlgMode  dlgMode            = DLG_INSTALL;
+    DlgState    dlgState        = DLG_CONFIRMATION;
+    DlgMode     dlgMode         = DLG_INSTALL;
     std::string filedir;
     std::string filename;
     FsStorageId destStorageId   = FsStorageId_SdCard;
