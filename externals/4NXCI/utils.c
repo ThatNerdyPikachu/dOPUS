@@ -77,7 +77,7 @@ void save_buffer_to_directory_file(void *buf, uint64_t size, struct filepath *di
         save_buffer_to_file(buf, size, &filepath);
     } else {
         fprintf(stderr, "Failed to create filepath!\n");
-        exit(EXIT_FAILURE);
+        throw_runtime_error(EXIT_FAILURE);
     }
 }
 
@@ -93,7 +93,7 @@ void save_file_section(FILE *f_in, uint64_t ofs, uint64_t total_size, filepath_t
     unsigned char *buf = malloc(read_size);
     if (buf == NULL) {
         fprintf(stderr, "Failed to allocate file-save buffer!\n");
-        exit(EXIT_FAILURE);
+        throw_runtime_error(EXIT_FAILURE);
     }
     memset(buf, 0xCC, read_size); /* Debug in case I fuck this up somehow... */
     uint64_t end_ofs = ofs + total_size;
@@ -112,7 +112,7 @@ void save_file_section(FILE *f_in, uint64_t ofs, uint64_t total_size, filepath_t
         if (ofs + read_size >= end_ofs) read_size = end_ofs - ofs;
         if (fread(buf, 1, read_size, f_in) != read_size) {
             fprintf(stderr, "Failed to read file!\n");
-            exit(EXIT_FAILURE);
+            throw_runtime_error(EXIT_FAILURE);
         }
         fwrite(buf, 1, read_size, f_out);
         ofs += read_size;
@@ -135,7 +135,7 @@ validity_t check_memory_hash_table(FILE *f_in, unsigned char *hash_table, uint64
     unsigned char *block = malloc(block_size);
     if (block == NULL) {
         fprintf(stderr, "Failed to allocate hash block!\n");
-        exit(EXIT_FAILURE);
+        throw_runtime_error(EXIT_FAILURE);
     }
 
     validity_t result = VALIDITY_VALID;
@@ -150,7 +150,7 @@ validity_t check_memory_hash_table(FILE *f_in, unsigned char *hash_table, uint64
         
         if (fread(block, 1, read_size, f_in) != read_size) {
             fprintf(stderr, "Failed to read file!\n");
-            exit(EXIT_FAILURE);
+            throw_runtime_error(EXIT_FAILURE);
         }        
         sha256_hash_buffer(cur_hash, block, full_block ? block_size : read_size);
         if (memcmp(cur_hash, cur_hash_table_entry, 0x20) != 0) {
@@ -176,13 +176,13 @@ validity_t check_file_hash_table(FILE *f_in, uint64_t hash_ofs, uint64_t data_of
     unsigned char *hash_table = malloc(hash_table_size);
     if (hash_table == NULL) {
         fprintf(stderr, "Failed to allocate hash table!\n");
-        exit(EXIT_FAILURE);
+        throw_runtime_error(EXIT_FAILURE);
     }
 
     fseeko64(f_in, hash_ofs, SEEK_SET);
     if (fread(hash_table, 1, hash_table_size, f_in) != hash_table_size) {
         fprintf(stderr, "Failed to read file!\n");
-        exit(EXIT_FAILURE);
+        throw_runtime_error(EXIT_FAILURE);
     }
 
     validity_t result = check_memory_hash_table(f_in, hash_table, data_ofs, data_len, block_size, full_block);

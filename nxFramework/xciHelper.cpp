@@ -2,16 +2,6 @@
 #include "nspHelper.h"
 #include "filehelper.h"
 
-#undef exit
-
-// 4NXCI and mbedtls are filled with exit() calls
-// so we hook exit() and throw an exception instead :)
-/*
-extern "C" void exit(int value)
-{
-  throw std::runtime_error(std::string("Exception on Exit: ") + char('0' + value));
-}
-*/
 extern "C" {
 #include <getopt.h>
 #include <errno.h>

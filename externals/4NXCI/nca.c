@@ -151,7 +151,7 @@ static void nca_save(nca_ctx_t *ctx)
     if (!fwrite(&ctx->header, 1, 0xC00, ctx->file))
     {
         fprintf(stderr, "Unable to patch NCA header");
-        exit(EXIT_FAILURE);
+        throw_runtime_error(EXIT_FAILURE);
     }
 }
 
@@ -392,7 +392,7 @@ void nca_saved_meta_process(nca_ctx_t *ctx, filepath_t *filepath)
     if (!nca_decrypt_header(ctx))
     {
         fprintf(stderr, "Invalid NCA header! Are keys correct?\n");
-        exit(EXIT_FAILURE);
+        throw_runtime_error(EXIT_FAILURE);
     }
 
     /* Sort out crypto type. */
@@ -466,7 +466,7 @@ void nca_saved_meta_process(nca_ctx_t *ctx, filepath_t *filepath)
         break;
     default:
         fprintf(stderr, "Unknown meta type! Are keys correct?\n");
-        exit(EXIT_FAILURE);
+        throw_runtime_error(EXIT_FAILURE);
     }
 }
 
@@ -476,7 +476,7 @@ void nca_gamecard_process(nca_ctx_t *ctx, filepath_t *filepath, int index, cnmt_
     if (!nca_decrypt_header(ctx))
     {
         fprintf(stderr, "Invalid NCA header! Are keys correct?\n");
-        exit(EXIT_FAILURE);
+        throw_runtime_error(EXIT_FAILURE);
     }
 
     uint8_t content_type = ctx->header.content_type;
@@ -521,7 +521,7 @@ void nca_gamecard_process(nca_ctx_t *ctx, filepath_t *filepath, int index, cnmt_
     if (buf == NULL)
     {
         fprintf(stderr, "Failed to allocate file-read buffer!\n");
-        exit(EXIT_FAILURE);
+        throw_runtime_error(EXIT_FAILURE);
     }
     fseeko64(ctx->file, 0, SEEK_SET);
     uint64_t ofs = 0;
@@ -543,7 +543,7 @@ void nca_gamecard_process(nca_ctx_t *ctx, filepath_t *filepath, int index, cnmt_
         if (fread(buf, 1, read_size, ctx->file) != read_size)
         {
             fprintf(stderr, "Failed to read file!\n");
-            exit(EXIT_FAILURE);
+            throw_runtime_error(EXIT_FAILURE);
         }
         sha_update(sha_ctx, buf, read_size);
         ofs += read_size;
@@ -606,7 +606,7 @@ void nca_download_process(nca_ctx_t *ctx, filepath_t *filepath, int index, cnmt_
     if (!nca_decrypt_header(ctx))
     {
         fprintf(stderr, "Invalid NCA header! Are keys correct?\n");
-        exit(EXIT_FAILURE);
+        throw_runtime_error(EXIT_FAILURE);
     }
 
     uint8_t content_type = ctx->header.content_type;
@@ -665,7 +665,7 @@ void nca_download_process(nca_ctx_t *ctx, filepath_t *filepath, int index, cnmt_
             if (!(tik_file = os_fopen(nsp_ctx->nsp_entry[0].filepath.os_path, OS_MODE_READ)))
             {
                 fprintf(stderr, "unable to open %s: %s\n", nsp_ctx->nsp_entry[0].filepath.char_path, strerror(errno));
-                exit(EXIT_FAILURE);
+                throw_runtime_error(EXIT_FAILURE);
             }
             fseeko64(tik_file, 0, SEEK_END);
             nsp_ctx->nsp_entry[0].filesize = (uint64_t)ftello64(tik_file);
@@ -676,7 +676,7 @@ void nca_download_process(nca_ctx_t *ctx, filepath_t *filepath, int index, cnmt_
             if (!(cert_file = os_fopen(nsp_ctx->nsp_entry[1].filepath.os_path, OS_MODE_READ)))
             {
                 fprintf(stderr, "unable to open %s: %s\n", nsp_ctx->nsp_entry[1].filepath.char_path, strerror(errno));
-                exit(EXIT_FAILURE);
+                throw_runtime_error(EXIT_FAILURE);
             }
             fseeko64(cert_file, 0, SEEK_END);
             nsp_ctx->nsp_entry[1].filesize = (uint64_t)ftello64(cert_file);
@@ -714,7 +714,7 @@ void nca_download_process(nca_ctx_t *ctx, filepath_t *filepath, int index, cnmt_
         if (fread(buff, 1, ctx->header.nca_size, ctx->file) != ctx->header.nca_size)
         {
             fprintf(stderr, "Failed to read Metadata!\n");
-            exit(EXIT_FAILURE);
+            throw_runtime_error(EXIT_FAILURE);
         }
         sha_update(sha_ctx, buff, ctx->header.nca_size);
         sha_get_hash(sha_ctx, meta_hash);
@@ -788,7 +788,7 @@ int nca_decrypt_header(nca_ctx_t *ctx)
     else
     {
         fprintf(stderr, "Invalid NCA magic!\n");
-        exit(EXIT_FAILURE);
+        throw_runtime_error(EXIT_FAILURE);
     }
     free_aes_ctx(hdr_aes_ctx);
     return ctx->format_version != NCAVERSION_UNKNOWN;

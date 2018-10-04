@@ -6,6 +6,7 @@
 #include "types.h"
 
 struct filepath;
+extern void throw_runtime_error(int status);
 
 #if defined(_WIN32) || defined(_WIN64)
 #define PATH_SEPERATOR '\\'
@@ -23,7 +24,7 @@ struct filepath;
 
 #define FATAL_ERROR(msg) do {\
     fprintf(stderr, "Error: %s\n", msg);\
-    exit(EXIT_FAILURE);\
+    throw_runtime_error(EXIT_FAILURE);\
 } while (0)
 
 uint32_t align(uint32_t offset, uint32_t alignment);

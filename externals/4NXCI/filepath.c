@@ -27,7 +27,7 @@ void os_strcpy(oschar_t *dst, const char *src) {
 
     if (ConvertUTF8toUTF16(&sourceStart, sourceEnd, &targetStart, targetEnd, 0) != conversionOK) {
         fprintf(stderr, "Failed to convert %s to UTF-16!\n", src);
-        exit(EXIT_FAILURE);
+        throw_runtime_error(EXIT_FAILURE);
     }
 #else
     strcpy(dst, src);

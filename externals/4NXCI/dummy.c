@@ -14,7 +14,7 @@ void dummy_create_cert(filepath_t *filepath, nsp_ctx_t *nsp_ctx)
     if (!(file = os_fopen(filepath->os_path, OS_MODE_WRITE)))
     {
         fprintf(stderr,"unable to create dummy cert\n");
-        exit(EXIT_FAILURE);
+        throw_runtime_error(EXIT_FAILURE);
     }
     fwrite(dummy_cert,1,DUMMYCERTSIZE,file);
     fclose(file);
@@ -38,7 +38,7 @@ void dummy_create_tik(filepath_t *filepath, nsp_ctx_t *nsp_ctx)
     if (!(file = os_fopen(filepath->os_path, OS_MODE_WRITE)))
     {
         fprintf(stderr,"unable to create dummy tik\n");
-        exit(EXIT_FAILURE);
+        throw_runtime_error(EXIT_FAILURE);
     }
     fwrite(dummy_tik,1,DUMMYTIKSIZE,file);
     fclose(file);

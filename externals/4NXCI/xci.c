@@ -34,13 +34,13 @@ void xci_process(xci_ctx_t *ctx) {
     
     if (ctx->header.magic != MAGIC_HEAD) {
         fprintf(stderr, "Error: XCI header is corrupt!\n");
-        exit(EXIT_FAILURE);
+        throw_runtime_error(EXIT_FAILURE);
     }
 
     ctx->hfs0_hash_validity = check_memory_hash_table(ctx->file, ctx->header.hfs0_header_hash, ctx->header.hfs0_offset, ctx->header.hfs0_header_size, ctx->header.hfs0_header_size, 0);
     if (ctx->hfs0_hash_validity != VALIDITY_VALID) {
         fprintf(stderr, "Error: XCI partition is corrupt!\n");
-        exit(EXIT_FAILURE);
+        throw_runtime_error(EXIT_FAILURE);
     }
     
     nxci_ctx_t blank_ctx;
@@ -54,7 +54,7 @@ void xci_process(xci_ctx_t *ctx) {
     
     if (ctx->partition_ctx.header->num_files > 4) {
         fprintf(stderr, "Error: Invalid XCI partition!\n");
-        exit(EXIT_FAILURE);    
+        throw_runtime_error(EXIT_FAILURE);
     }
     
     for (unsigned int i = 0; i < ctx->partition_ctx.header->num_files; i++)  {
@@ -74,7 +74,7 @@ void xci_process(xci_ctx_t *ctx) {
         
         if (cur_ctx == NULL) {
             fprintf(stderr, "Unknown XCI partition: %s\n", cur_name);
-            exit(EXIT_FAILURE);
+            throw_runtime_error(EXIT_FAILURE);
         }
         
         cur_ctx->name = cur_name;

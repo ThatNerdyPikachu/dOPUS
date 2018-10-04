@@ -20,7 +20,7 @@ void cnmt_create_xml(cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_ctx_t *cnmt_ctx, nsp_ctx
     if (!(file = os_fopen(cnmt_xml_ctx->filepath.os_path, OS_MODE_WRITE)))
     {
         fprintf(stderr, "unable to create xml metadata\n");
-        exit(EXIT_FAILURE);
+        throw_runtime_error(EXIT_FAILURE);
     }
     fprintf(file, "<?xml version=\"1.0\" encoding=\"utf-8\"?>\x0D\x0A");
     fprintf(file, "<ContentMeta>\x0D\x0A");
@@ -112,7 +112,7 @@ void cnmt_gamecard_process(nxci_ctx_t *tool, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_
         if (!(nca_ctx.file = os_fopen(filepath.os_path, OS_MODE_EDIT)))
         {
             fprintf(stderr, "unable to open %s: %s\n", filepath.char_path, strerror(errno));
-            exit(EXIT_FAILURE);
+            throw_runtime_error(EXIT_FAILURE);
         }
         nca_gamecard_process(&nca_ctx, &filepath, index, cnmt_xml_ctx, cnmt_ctx, nsp_ctx);
         nca_free_section_contexts(&nca_ctx);
@@ -125,7 +125,7 @@ void cnmt_gamecard_process(nxci_ctx_t *tool, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_
     if (!(nca_ctx.file = os_fopen(cnmt_ctx->meta_filepath.os_path, OS_MODE_EDIT)))
     {
         fprintf(stderr, "unable to open %s: %s\n", cnmt_ctx->meta_filepath.char_path, strerror(errno));
-        exit(EXIT_FAILURE);
+        throw_runtime_error(EXIT_FAILURE);
     }
     nca_gamecard_process(&nca_ctx, &cnmt_ctx->meta_filepath, cnmt_ctx->nca_count, cnmt_xml_ctx, cnmt_ctx, nsp_ctx);
     nca_free_section_contexts(&nca_ctx);
@@ -224,7 +224,7 @@ void cnmt_download_process(nxci_ctx_t *tool, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_
         if (!(nca_ctx.file = os_fopen(filepath.os_path, OS_MODE_EDIT)))
         {
             fprintf(stderr, "unable to open %s: %s\n", filepath.char_path, strerror(errno));
-            exit(EXIT_FAILURE);
+            throw_runtime_error(EXIT_FAILURE);
         }
         nca_download_process(&nca_ctx, &filepath, index, cnmt_xml_ctx, cnmt_ctx, nsp_ctx);
         nca_free_section_contexts(&nca_ctx);
@@ -237,7 +237,7 @@ void cnmt_download_process(nxci_ctx_t *tool, cnmt_xml_ctx_t *cnmt_xml_ctx, cnmt_
     if (!(nca_ctx.file = os_fopen(cnmt_ctx->meta_filepath.os_path, OS_MODE_EDIT)))
     {
         fprintf(stderr, "unable to open %s: %s\n", cnmt_ctx->meta_filepath.char_path, strerror(errno));
-        exit(EXIT_FAILURE);
+        throw_runtime_error(EXIT_FAILURE);
     }
     nca_download_process(&nca_ctx, &cnmt_ctx->meta_filepath, cnmt_ctx->nca_count, cnmt_xml_ctx, cnmt_ctx, nsp_ctx);
     nca_free_section_contexts(&nca_ctx);
@@ -300,8 +300,9 @@ char *cnmt_get_title_type(cnmt_ctx_t *cnmt_ctx)
         break;
     default:
         fprintf(stderr, "Unknown meta type\n");
-        exit(EXIT_FAILURE);
+        throw_runtime_error(EXIT_FAILURE);
     }
+    return "";
 }
 
 char *cnmt_get_content_type(uint8_t type)
@@ -328,6 +329,7 @@ char *cnmt_get_content_type(uint8_t type)
         break;
     default:
         fprintf(stderr, "Unknown meta content type\n");
-        exit(EXIT_FAILURE);
+        throw_runtime_error(EXIT_FAILURE);
     }
+    return "";
 }

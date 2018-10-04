@@ -9,26 +9,26 @@ void hfs0_process(hfs0_ctx_t *ctx) {
     fseeko64(ctx->file, ctx->offset, SEEK_SET);
     if (fread(&raw_header, 1, sizeof(raw_header), ctx->file) != sizeof(raw_header)) {
         fprintf(stderr, "Failed to read HFS0 header!\n");
-        exit(EXIT_FAILURE);
+        throw_runtime_error(EXIT_FAILURE);
     }
     
     if (raw_header.magic != MAGIC_HFS0) {
         memdump(stdout, "Sanity: ", &raw_header, sizeof(raw_header));
         printf("Error: HFS0 is corrupt!\n");
-        exit(EXIT_FAILURE);
+        throw_runtime_error(EXIT_FAILURE);
     }
 
     uint64_t header_size = hfs0_get_header_size(&raw_header);
     ctx->header = malloc(header_size);
     if (ctx->header == NULL) {
         fprintf(stderr, "Failed to allocate HFS0 header!\n");
-        exit(EXIT_FAILURE);
+        throw_runtime_error(EXIT_FAILURE);
     }
     
     fseeko64(ctx->file, ctx->offset, SEEK_SET);
     if (fread(ctx->header, 1, header_size, ctx->file) != header_size) {
         fprintf(stderr, "Failed to read HFS0 header!\n");
-        exit(EXIT_FAILURE);
+        throw_runtime_error(EXIT_FAILURE);
     }
     
     /* Weak file validation. */
@@ -39,7 +39,7 @@ void hfs0_process(hfs0_ctx_t *ctx) {
         hfs0_file_entry_t *cur_file = hfs0_get_file_entry(ctx->header, i);
         if (cur_file->offset < cur_ofs) {
             printf("Error: HFS0 is corrupt!\n");
-            exit(EXIT_FAILURE);
+            throw_runtime_error(EXIT_FAILURE);
         }
         cur_ofs += cur_file->size;
     }
@@ -68,13 +68,13 @@ int hfs0_saved_nca_process(filepath_t *filepath, nxci_ctx_t *tool)
 void hfs0_save_file(hfs0_ctx_t *ctx, uint32_t i, filepath_t *dirpath) {
     if (i >= ctx->header->num_files) {
         fprintf(stderr, "Could not save file %"PRId32"!\n", i);
-        exit(EXIT_FAILURE);
+        throw_runtime_error(EXIT_FAILURE);
     }
     hfs0_file_entry_t *cur_file = hfs0_get_file_entry(ctx->header, i);
 
     if (strlen(hfs0_get_file_name(ctx->header, i)) >= MAX_PATH - strlen(dirpath->char_path) - 1) {
         fprintf(stderr, "Filename too long in HFS0!\n");
-        exit(EXIT_FAILURE);
+        throw_runtime_error(EXIT_FAILURE);
     }
 
     filepath_t filepath;
@@ -85,7 +85,7 @@ void hfs0_save_file(hfs0_ctx_t *ctx, uint32_t i, filepath_t *dirpath) {
     save_file_section(ctx->file, ctx->offset + ofs, cur_file->size, &filepath);
     if (!hfs0_saved_nca_process(&filepath,ctx->tool_ctx))
     {
-        exit(EXIT_FAILURE);
+        throw_runtime_error(EXIT_FAILURE);
     }
 }
 

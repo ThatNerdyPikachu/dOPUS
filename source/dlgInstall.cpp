@@ -183,6 +183,7 @@ void DLGInstall::Update(const double timer, const u64 kDown)
 
             if(enoughSpace)
             {
+                displayOpenFiles();
                 if(dlgMode == DLG_INSTALL || dlgMode == DLG_INSTALL_DELETE)
                 {
                     progress                                 = 0.f;
@@ -280,6 +281,7 @@ void DLGInstall::CleanUp()
     progress        = 0.f;
     progressState   = 0;
     enoughSpace     = true;
+    displayOpenFiles();
 }
 
 void DLGInstall::Render(const double timer)

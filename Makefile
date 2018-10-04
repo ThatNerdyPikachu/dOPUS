@@ -55,12 +55,12 @@ APP_VERSION :=  0.1.0
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-ARCH	:=	-march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIE
+ARCH	 :=	-march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIE
 
-CFLAGS	:=	-g -Wall -ffunction-sections `sdl2-config --cflags` `freetype-config --cflags` \
+CFLAGS	 :=	-g -Wall -ffunction-sections `sdl2-config --cflags` `freetype-config --cflags` \
 			$(ARCH) $(DEFINES)
-CFLAGS	+=	$(INCLUDE) -D__SWITCH__
-CFLAGS	+=	-D_BSD_SOURCE -D_POSIX_SOURCE -D_POSIX_C_SOURCE=200112L -D_DEFAULT_SOURCE -D__USE_MINGW_ANSI_STDIO=1 -D_FILE_OFFSET_BITS=64
+CFLAGS	 +=	$(INCLUDE) -D__SWITCH__
+CFLAGS	 +=	-D_BSD_SOURCE -D_POSIX_SOURCE -D_POSIX_C_SOURCE=200112L -D_DEFAULT_SOURCE -D__USE_MINGW_ANSI_STDIO=1 -D_FILE_OFFSET_BITS=64
 
 ifeq ($(DEBUG), 1)
 CFLAGS   += -O0 -DDEBUG
@@ -68,12 +68,15 @@ else
 CFLAGS   += -O2 -DNDEBUG
 endif
 
-CXXFLAGS	:= $(CFLAGS) -std=gnu++17 -Wformat-truncation=0
-CXXFLAGS+= -D_BSD_SOURCE -D_POSIX_SOURCE -D_POSIX_C_SOURCE=200112L -D_DEFAULT_SOURCE -D__USE_MINGW_ANSI_STDIO=1 -D_FILE_OFFSET_BITS=64
+CXXFLAGS := $(CFLAGS) -std=gnu++17 -Wformat-truncation=0
+CXXFLAGS += -D_BSD_SOURCE -D_POSIX_SOURCE -D_POSIX_C_SOURCE=200112L -D_DEFAULT_SOURCE -D__USE_MINGW_ANSI_STDIO=1 -D_FILE_OFFSET_BITS=64
 
-ASFLAGS	:=	-g $(ARCH)
-LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map) \
-			-Wl,--wrap=fopen -Wl,-wrap=fclose -Wl,-wrap=exit
+ASFLAGS	 :=	-g $(ARCH)
+LDFLAGS	 =	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
+
+ifeq ($(DEBUG), 1)
+LDFLAGS  +=	-Wl,--wrap=fopen -Wl,-wrap=fclose
+endif
 
 LIBS	:=	-lSDL2_ttf -lSDL2_gfx -lSDL2_image \
 			-lpng -ljpeg `sdl2-config --libs` `freetype-config --libs` -lnx  \

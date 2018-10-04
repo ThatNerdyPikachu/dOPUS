@@ -4,6 +4,8 @@
 #include "types.h"
 #include "filepath.h"
 
+extern void throw_runtime_error(int status);
+
 typedef enum {
     KEYSET_DEV,
     KEYSET_RETAIL

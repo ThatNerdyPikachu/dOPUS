@@ -153,13 +153,13 @@ static char hextoi(char c) {
 void parse_hex_key(unsigned char *key, const char *hex, unsigned int len) {
     if (strlen(hex) != 2 * len) {
         fprintf(stderr, "Key (%s) must be %"PRIu32" hex digits!\n", hex, 2 * len);
-        exit(EXIT_FAILURE);
+        throw_runtime_error(EXIT_FAILURE);
     }
 
     for (unsigned int i = 0; i < 2 * len; i++) {
         if (!ishex(hex[i])) {
             fprintf(stderr, "Key (%s) must be %"PRIu32" hex digits!\n", hex, 2 * len);
-            exit(EXIT_FAILURE);
+            throw_runtime_error(EXIT_FAILURE);
         }
     }
 

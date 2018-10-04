@@ -41,28 +41,28 @@ void nsp_create(nsp_ctx_t *nsp_ctx)
     if ((nsp_file = os_fopen(nsp_ctx->filepath.os_path, OS_MODE_WRITE)) == NULL)
     {
         fprintf(stderr, "unable to create nsp\n");
-        exit(EXIT_FAILURE);
+        throw_runtime_error(EXIT_FAILURE);
     }
 
     // Write header
     if (!fwrite(&nsp_header, sizeof(pfs0_header_t), 1, nsp_file))
     {
         fprintf(stderr, "Unable to write nsp header");
-        exit(EXIT_FAILURE);
+        throw_runtime_error(EXIT_FAILURE);
     }
 
     // Write file entry table
     if (!fwrite(file_entry_table, sizeof(nsp_file_entry_table_t), nsp_ctx->entry_count, nsp_file))
     {
         fprintf(stderr, "Unable to write nsp file entry table");
-        exit(EXIT_FAILURE);
+        throw_runtime_error(EXIT_FAILURE);
     }
 
     // Write string table
     if (!fwrite(string_table, 1, string_table_size, nsp_file))
     {
         fprintf(stderr, "Unable to write nsp string table");
-        exit(EXIT_FAILURE);
+        throw_runtime_error(EXIT_FAILURE);
     }
 
     for (int i2 = 0; i2 < nsp_ctx->entry_count; i2++)
@@ -72,14 +72,14 @@ void nsp_create(nsp_ctx_t *nsp_ctx)
         if (!(nsp_data_file = os_fopen(nsp_ctx->nsp_entry[i2].filepath.os_path, OS_MODE_READ)))
         {
             fprintf(stderr, "unable to open %s: %s\n", nsp_ctx->nsp_entry[i2].filepath.char_path, strerror(errno));
-            exit(EXIT_FAILURE);
+            throw_runtime_error(EXIT_FAILURE);
         }
         uint64_t read_size = 0x400000; // 4 MB buffer.
         unsigned char *buf = malloc(read_size);
         if (buf == NULL)
         {
             fprintf(stderr, "Failed to allocate file-read buffer!\n");
-            exit(EXIT_FAILURE);
+            throw_runtime_error(EXIT_FAILURE);
         }
 
         progress = 0;
@@ -96,7 +96,7 @@ void nsp_create(nsp_ctx_t *nsp_ctx)
             if (fread(buf, 1, read_size, nsp_data_file) != read_size)
             {
                 fprintf(stderr, "Failed to read file %s\n", nsp_ctx->nsp_entry[i2].filepath.char_path);
-                exit(EXIT_FAILURE);
+                throw_runtime_error(EXIT_FAILURE);
             }
             fwrite(buf, read_size, 1, nsp_file);
             ofs += read_size;
