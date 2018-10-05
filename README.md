@@ -1,9 +1,7 @@
 # dOPUS
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-dOPUS is an installer and converter of NSP and XCI files for the Nintendo Switch.
-
-dOpUS is Based on Tinfoil and 4NXCI. Thanks: SciresM, Adubbz, The-4n.
+dOPUS is an installer and converter of NSP and XCI files for the Nintendo Switch. It is Based on Tinfoil and 4NXCI. Thanks to SciresM, Adubbz, The-4n, and the community.
 
 DISCLAIMER: Use dOPUS at your own risk. I'm not responsible for any damage, data loss, or anything else dOPUS may cause.
 
