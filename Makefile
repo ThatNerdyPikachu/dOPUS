@@ -49,7 +49,7 @@ EXEFS_SRC	:=	exefs_src
 ROMFS		:=	romfs
 APP_TITLE   :=  dOPUS
 APP_AUTHOR  :=  HyDE
-APP_VERSION :=  0.1.0
+APP_VERSION :=  0.6
 
 
 #---------------------------------------------------------------------------------
