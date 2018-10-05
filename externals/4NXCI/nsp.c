@@ -89,7 +89,6 @@ void nsp_create(nsp_ctx_t *nsp_ctx)
         uint64_t startTime  = armGetSystemTick();
         progress            = 0.f;
         progressSpeed       = 0.f;
-        size_t startSize    = 0;
 
         while (ofs < nsp_ctx->nsp_entry[i2].filesize)
         {
@@ -99,12 +98,9 @@ void nsp_create(nsp_ctx_t *nsp_ctx)
             uint64_t newTime = armGetSystemTick();
             if (newTime - startTime >= freq)
             {
-                size_t newSize      = ofs;
-                double mbRead       = (newSize / (1024.0 * 1024.0)) - (startSize / (1024 * 1024));
-                double duration     = ((double)(newTime - startTime) / (double)freq);
+                double mbRead       = ofs / (1024.0 * 1024.0);
+                double duration     = (double)(newTime - startTime) / (double)freq;
                 progressSpeed       = (float)(mbRead / duration);
-                startTime           = newTime;
-                startSize           = newSize;
             }
 
             if (ofs % (0x400000 * 3) == 0)

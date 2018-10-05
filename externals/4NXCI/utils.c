@@ -9,7 +9,9 @@
 #include "filepath.h"
 #include "sha.h"
 
+#include <switch.h>
 extern float progress;
+extern float progressSpeed;
 
 uint32_t align(uint32_t offset, uint32_t alignment) {
     uint32_t mask = ~(alignment-1);
@@ -99,12 +101,26 @@ void save_file_section(FILE *f_in, uint64_t ofs, uint64_t total_size, filepath_t
     uint64_t end_ofs = ofs + total_size;
     fseeko64(f_in, ofs, SEEK_SET);
 
-    progress = 0;
     uint64_t readBytes = 0;
     uint64_t sizeToRead = end_ofs-ofs;
 
+    uint64_t freq       = armGetSystemTickFreq();
+    uint64_t startTime  = armGetSystemTick();
+    progress            = 0.f;
+    progressSpeed       = 0.f;
+
     while (ofs < end_ofs) {
+        // Progress in %
         progress = (float)readBytes / (float)sizeToRead;
+
+        // Progress speed in MB/s
+        uint64_t newTime = armGetSystemTick();
+        if (newTime - startTime >= freq)
+        {
+            double mbRead       = readBytes / (1024.0 * 1024.0);
+            double duration     = (double)(newTime - startTime) / (double)freq;
+            progressSpeed       = (float)(mbRead / duration);
+        }
 
         if (readBytes % (0x400000 * 3) == 0)
             printf("> Saving Progress: %lu/%lu MB (%d%s)\n", (readBytes / 1000000), (sizeToRead / 1000000), (int)(progress * 100.0), "%");

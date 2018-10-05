@@ -208,6 +208,8 @@ bool ExtractXCI(const std::string& filename, const bool saveNSP)
         LOG("Failed to process XCI!\n");
         LOG("%s", e.what());
 
+        // Clean-up
+        RmDirRecursive(tool_ctx.settings.secure_dir_path.char_path);
         if(tool_ctx.file != NULL)
             fclose(tool_ctx.file);
 
@@ -246,6 +248,7 @@ bool InstallXCI(const std::string& filename, const FsStorageId destStorageId, co
     }
 
     // 3/ Install
+    progressState = 2; // Installing
     LOG("\nInstalling folder %s...\n", outputDir);
     if(!InstallExtracted(std::string(outputDir), destStorageId, ignoreReqFirmVersion))
     {

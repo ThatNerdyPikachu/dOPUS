@@ -247,7 +247,7 @@ int Navigate(char* cwd, DirEntry& entry, bool up)
 	return 0; // Return success
 }
 
-int  RmDirRecursive (const char* dir)
+int RmDirRecursive (const char* dir)
 {
     std::vector<DirEntry> dirEntries;
     std::vector<std::string>extFilters;
@@ -279,10 +279,30 @@ int  RmDirRecursive (const char* dir)
     return 0;
 }
 
-u64 GetDirSizeRecursive (const char* dir)
+u64 GetDirSizeNonRecursive (const char* dir)
 {
-    // TODO
-    return 0;
+    std::vector<DirEntry> dirEntries;
+    std::vector<std::string>extFilters;
+    PopulateFiles(dir, dirEntries, extFilters);
+    u64 dirSize = 0;
+    for(int i = 0 ; i < (int)dirEntries.size() ; ++i)
+    {
+        DirEntry& entry = dirEntries[i];
+
+        // Ignore ".." in Root Directory
+        if (strncmp((char*)entry.name, "..", 2) == 0) // Ignore ".."
+            continue;
+
+        if(!entry.isDir)
+        {
+            std::string entryPath(std::string(dir) + "/" + std::string((char*)entry.name));
+            u64 fileSize = GetFileSize(entryPath.c_str());
+            dirSize += fileSize;
+            LOG("File size %s %" PRIu64 "...\n", entry.name, fileSize);
+        }
+    }
+    LOG("Dir size %s %" PRIu64 "...\n", dir, dirSize);
+    return dirSize;
 }
 
 bool FileExist(const char* filename)

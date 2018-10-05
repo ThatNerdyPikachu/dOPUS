@@ -11,7 +11,7 @@ extern "C" int   __real_fclose (FILE* f);
 extern "C" FILE* __wrap_fopen (const char *fn, const char *mode)
 {
     FILE* f = __real_fopen(fn, mode);
-    LOG("\nHOOK: fopen(\"%s\", \"%s\") == %p\n", fn, mode, f);
+    LOG("HOOK: fopen(\"%s\", \"%s\") == %p\n", fn, mode, f);
 
     // Add the entry to the open file list
     openFiles[f] = std::string(fn);

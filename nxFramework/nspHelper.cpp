@@ -290,7 +290,6 @@ void InstallNCA(SimpleFileSystem& simpleFS, const NcmNcaId& ncaId, const FsStora
     u64 startTime       = armGetSystemTick();
     progress            = 0.f;
     progressSpeed       = 0.f;
-    size_t startSize    = 0;
     while (fileOff < ncaSize)
     {
         // Progress in %
@@ -300,12 +299,9 @@ void InstallNCA(SimpleFileSystem& simpleFS, const NcmNcaId& ncaId, const FsStora
         u64 newTime = armGetSystemTick();
         if (newTime - startTime >= freq)
         {
-            size_t newSize      = fileOff;
-            double mbRead       = (newSize / (1024.0 * 1024.0)) - (startSize / (1024 * 1024));
-            double duration     = ((double)(newTime - startTime) / (double)freq);
+            double mbRead       = fileOff / (1024.0 * 1024.0);
+            double duration     = (double)(newTime - startTime) / (double)freq;
             progressSpeed       = (float)(mbRead / duration);
-            startTime           = newTime;
-            startSize           = newSize;
         }
 
         if (fileOff % (0x400000 * 3) == 0)
@@ -433,13 +429,14 @@ bool InstallExtracted(const std::string& filename, const FsStorageId destStorage
 // numFiles * 0x18 = numFiles * 24 = data_offset (8bytes) + data_size (8bytes) + str_offset (4bytes) + unused (4bytes)
 bool ExtractNSP(const std::string& filename)
 {
+    // Output Path
+    char outputDir[1024];
+    GetFileBasename(outputDir, filename.c_str());
+
     FILE* NSPfile = nullptr;
+
     try
     {
-        // Output Path
-        char outputDir[1024];
-        GetFileBasename(outputDir, filename.c_str());
-
         // Clean-up dir if it exists
         RmDirRecursive(outputDir);
         mkdir(outputDir, 0777);
@@ -447,7 +444,7 @@ bool ExtractNSP(const std::string& filename)
         if (!(NSPfile = fopen(filename.c_str(), "rb")))
         {
             fprintf(stderr, "unable to open %s: %s\n", filename.c_str(), strerror(errno));
-            return false;
+            throw std::runtime_error(std::string("unable to open ") + filename.c_str());
         }
 
         // Read NSP header
@@ -458,8 +455,7 @@ bool ExtractNSP(const std::string& filename)
         if(strcmp(FOURCC, "PFS0") != 0)
         {
             fprintf(stderr, "Error: File FOURCC is invalid (expected: PFS0, got: %s)", FOURCC);
-            fclose(NSPfile);
-            return false;
+            throw std::runtime_error("Error: File FOURCC is invalid");
         }
         uint fileCount;
         uint strTableLen;
@@ -529,8 +525,7 @@ bool ExtractNSP(const std::string& filename)
             if (!(outfile = fopen(outputFilename.c_str(), "wb")))
             {
                 fprintf(stderr, "unable to open %s: %s\n", outputFilename.c_str(), strerror(errno));
-                fclose(NSPfile);
-                return false;
+                throw std::runtime_error(std::string("unable to open ") + outputFilename.c_str());
             }
 
             // Seek
@@ -548,7 +543,6 @@ bool ExtractNSP(const std::string& filename)
             u64 startTime       = armGetSystemTick();
             progress            = 0.f;
             progressSpeed       = 0.f;
-            size_t startSize    = 0;
 
             while (fileOff < fileDesc.dataSize)
             {
@@ -559,12 +553,9 @@ bool ExtractNSP(const std::string& filename)
                 u64 newTime = armGetSystemTick();
                 if (newTime - startTime >= freq)
                 {
-                    size_t newSize      = fileOff;
-                    double mbRead       = (newSize / (1024.0 * 1024.0)) - (startSize / (1024 * 1024));
-                    double duration     = ((double)(newTime - startTime) / (double)freq);
+                    double mbRead       = fileOff / (1024.0 * 1024.0);
+                    double duration     = (double)(newTime - startTime) / (double)freq;
                     progressSpeed       = (float)(mbRead / duration);
-                    startTime           = newTime;
-                    startSize           = newSize;
                 }
 
                 if (fileOff % (0x400000 * 3) == 0)
@@ -586,7 +577,12 @@ bool ExtractNSP(const std::string& filename)
     {
         LOG("Failed to extract NSP!\n");
         LOG("%s", e.what());
-        if(NSPfile != nullptr) fclose(NSPfile);
+
+        // Clean-up
+        RmDirRecursive(outputDir);
+        if(NSPfile != nullptr)
+            fclose(NSPfile);
+
         return false;
     }
     return true;

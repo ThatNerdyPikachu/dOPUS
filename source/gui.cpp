@@ -10,57 +10,7 @@ using namespace NXFramework;
 
 const char* imgFiles[] =
 {
-    "romfs:/res/images/ic_fso_type_executable.png",
-    "romfs:/res/images/ic_fso_type_compress.png",
-    "romfs:/res/images/ic_fso_type_audio.png",
-	"romfs:/res/images/ic_fso_folder.png",
-	"romfs:/res/images/ic_fso_folder_dark.png",
-	"romfs:/res/images/ic_fso_type_document.png",
-	"romfs:/res/images/ic_fso_default.png",
-	"romfs:/res/images/ic_fso_type_image.png",
-	"romfs:/res/images/ic_fso_type_text.png",
-	"romfs:/res/images/btn_material_light_check_on_normal.png",
-	"romfs:/res/images/btn_material_light_check_on_normal_dark.png",
-	"romfs:/res/images/btn_material_light_check_off_normal.png",
-	"romfs:/res/images/btn_material_light_check_off_normal_dark.png",
-	"romfs:/res/images/ic_material_dialog.png",
-	"romfs:/res/images/ic_material_options_dialog.png",
-    "romfs:/res/images/ic_material_properties_dialog.png",
-	"romfs:/res/images/ic_material_dialog_dark.png",
-	"romfs:/res/images/ic_material_options_dialog_dark.png",
-	"romfs:/res/images/ic_material_properties_dialog_dark.png",
-	"romfs:/res/images/bg_header.png",
-	"romfs:/res/images/ic_material_light_settings.png",
-	"romfs:/res/images/ic_material_light_sdcard.png",
-    "romfs:/res/images/ic_material_light_secure.png",
-	"romfs:/res/images/ic_material_light_settings_dark.png",
-	"romfs:/res/images/ic_material_light_sdcard_dark.png",
-	"romfs:/res/images/ic_material_light_secure_dark.png",
-	"romfs:/res/images/btn_material_light_radio_off_normal.png",
-	"romfs:/res/images/btn_material_light_radio_on_normal.png",
-	"romfs:/res/images/btn_material_light_radio_off_normal_dark.png",
-	"romfs:/res/images/btn_material_light_radio_on_normal_dark.png",
-	"romfs:/res/images/btn_material_light_toggle_on_normal.png",
-	"romfs:/res/images/btn_material_light_toggle_on_normal_dark.png",
-	"romfs:/res/images/btn_material_light_toggle_off_normal.png",
-	"romfs:/res/images/default_artwork.png",
-	"romfs:/res/images/default_artwork_blur.png",
-	"romfs:/res/images/btn_playback_play.png",
-	"romfs:/res/images/btn_playback_pause.png",
-	"romfs:/res/images/btn_playback_rewind.png",
-	"romfs:/res/images/btn_playback_forward.png",
-	"romfs:/res/images/btn_playback_repeat.png",
-	"romfs:/res/images/btn_playback_shuffle.png",
-	"romfs:/res/images/btn_playback_repeat_overlay.png",
-	"romfs:/res/images/btn_playback_shuffle_overlay.png",
-	"romfs:/res/images/ic_material_light_navigation_drawer.png",
-	"romfs:/res/images/ic_material_light_contextual_action.png",
-	"romfs:/res/images/ic_arrow_back_normal.png",
-	"romfs:/res/images/ic_material_light_accept.png",
-	"romfs:/res/images/ic_material_light_accept_dark.png",
-	"romfs:/res/images/ic_material_light_remove.png",
-	"romfs:/res/images/ic_material_light_remove_dark.png",
-	"romfs:/res/images/battery_20.png",
+    "romfs:/res/images/battery_20.png",
 	"romfs:/res/images/battery_20_charging.png",
 	"romfs:/res/images/battery_30.png",
 	"romfs:/res/images/battery_30_charging.png",
@@ -76,7 +26,10 @@ const char* imgFiles[] =
 	"romfs:/res/images/battery_full_charging.png",
 	"romfs:/res/images/battery_low.png",
 	"romfs:/res/images/battery_unknown.png",
-	"romfs:/res/images/ic_material_dialog_fs_locked.png",
+	"romfs:/res/images/ic_fso_folder.png",
+	"romfs:/res/images/ic_fso_default.png",
+	"romfs:/res/images/ic_material_properties_dialog_dark.png",
+	"romfs:/res/images/ic_material_dialog_dark.png",
 };
 
 const std::pair<const char*,u32> fontFiles[] =
@@ -193,8 +146,8 @@ void GUI::Render(const double timer)
     // Title
     int height = 0;
     int width  = 0;
-    TTF_SizeText(fonts[Roboto], "dOPUS 0.6", &width, &height);
-    SDL::DrawText(SDL::Renderer, fonts[Roboto], 12, (40 - height) / 2, CYAN, "dOPUS 0.6");
+    TTF_SizeText(fonts[Roboto], "dOPUS 0.6 by HyDE", &width, &height);
+    SDL::DrawText(SDL::Renderer, fonts[Roboto], 12, (40 - height) / 2, CYAN, "dOPUS 0.6 by HyDE");
 
     // Free space
     {
@@ -214,7 +167,7 @@ void GUI::Render(const double timer)
         std::string ("/")           + std::string(totalSDStr)   + std::string ("      Nand ") +
         std::string(freeNandStr)    + std::string ("/")         + std::string(totalNandstr);
         TTF_SizeText(fonts[Roboto], freeSpace.c_str(), NULL, &height);
-        SDL::DrawText(SDL::Renderer, fonts[Roboto], 60 + width, (40 - height) / 2, WHITE, freeSpace.c_str());
+        SDL::DrawText(SDL::Renderer, fonts[Roboto], 80 + width, (40 - height) / 2, WHITE, freeSpace.c_str());
     }
 
     // Status bar

@@ -533,7 +533,6 @@ void nca_gamecard_process(nca_ctx_t *ctx, filepath_t *filepath, int index, cnmt_
 
     uint64_t freq       = armGetSystemTickFreq();
     uint64_t startTime  = armGetSystemTick();
-    size_t   startSize  = 0;
     progress            = 0.f;
     progressSpeed       = 0.f;
 
@@ -546,12 +545,9 @@ void nca_gamecard_process(nca_ctx_t *ctx, filepath_t *filepath, int index, cnmt_
         uint64_t newTime = armGetSystemTick();
         if (newTime - startTime >= freq)
         {
-            size_t newSize      = readBytes;
-            double mbRead       = (newSize / (1024.0 * 1024.0)) - (startSize / (1024 * 1024));
-            double duration     = ((double)(newTime - startTime) / (double)freq);
+            double mbRead       = readBytes / (1024.0 * 1024.0);
+            double duration     = (double)(newTime - startTime) / (double)freq;
             progressSpeed       = (float)(mbRead / duration);
-            startTime           = newTime;
-            startSize           = newSize;
         }
 
         if (readBytes % (0x400000 * 3) == 0)
