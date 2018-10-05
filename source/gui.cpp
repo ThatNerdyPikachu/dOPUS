@@ -167,7 +167,7 @@ void GUI::Render(const double timer)
         std::string ("/")           + std::string(totalSDStr)   + std::string ("      Nand ") +
         std::string(freeNandStr)    + std::string ("/")         + std::string(totalNandstr);
         TTF_SizeText(fonts[Roboto], freeSpace.c_str(), NULL, &height);
-        SDL::DrawText(SDL::Renderer, fonts[Roboto], 80 + width, (40 - height) / 2, WHITE, freeSpace.c_str());
+        SDL::DrawText(SDL::Renderer, fonts[Roboto], 200 + width, (40 - height) / 2, WHITE, freeSpace.c_str());
     }
 
     // Status bar
