@@ -7,7 +7,7 @@ DISCLAIMER: Use dOPUS at your own risk. I'm not responsible for any damage, data
 
 ## Installation
 * Place dOPUS.nro in /switch folder on your sd card.
-* Requires `sdmc:/keys.dat` in order to extract/install XCI files. Keys can be extracted using kezplez (https://github.com/tesnos/kezplez-nx/tree/v1.0)
+* Requires `sdmc:/keys.dat` in order to extract/install XCI files. Keys can be extracted using tesnos' kezplez (https://github.com/tesnos/kezplez-nx/tree/v1.0) or shchmue's fork of kezplez (https://github.com/shchmue/kezplez-nx/releases). Hers supports the fuses and TSEC being dumped in multiple locations as well as also supporting firmware 6.0.
 
 ## Usage
 * Launch dOPUS via hbmenu.
