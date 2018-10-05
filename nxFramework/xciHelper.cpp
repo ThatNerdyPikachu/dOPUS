@@ -98,7 +98,7 @@ bool ExtractXCI(const std::string& filename, const bool saveNSP)
         pki_initialize_keyset(&tool_ctx.settings.keyset, KEYSET_RETAIL);
 
         // Default keyset filepath
-        filepath_set(&keypath, "/keys.dat");
+        filepath_set(&keypath, "/switch/dOPUS/keys.dat");
 
         // Try to populate default keyfile.
         FILE *keyfile = NULL;
